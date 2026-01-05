@@ -1,8 +1,11 @@
 package stringx
 
-// IsEmpty checks if a string is empty ("")
+// IsEmpty returns true if the string is solely composed of whitespace.
 func IsEmpty[S ~string](s S) bool {
-	return len(s) == 0
+	if s == "" {
+		return true
+	}
+	return whitespaceRe.MatchString(string(s))
 }
 
 // IsNotEmpty Checks if a string is not empty ("")
