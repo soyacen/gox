@@ -2,8 +2,10 @@ package filex
 
 import (
 	"archive/zip"
+	"bufio"
 	"io"
 	"io/fs"
+	"iter"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -11,6 +13,20 @@ import (
 
 	"github.com/go-leo/gox/stringx"
 )
+
+func Lines(file *os.File) iter.Seq[[]byte] {
+	return func(yield func([]byte) bool) {
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			if scanner.Err() != nil {
+				return
+			}
+			if !yield(scanner.Bytes()) {
+				return
+			}
+		}
+	}
+}
 
 func Primary(path string) string {
 	return strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
