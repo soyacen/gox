@@ -1,14 +1,9 @@
-// Copyright 2018 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 package genx
 
 import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/soyacen/gox/stringx"
 	"go/ast"
 	"go/parser"
 	"go/printer"
@@ -18,24 +13,22 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/soyacen/gox/stringx"
 )
 
-// A GeneratedFile represents a Go source file to be generated.
+// GeneratedFile 表示一个正在生成的Go源文件
 type GeneratedFile struct {
-	filename         string
-	goImportPath     GoImportPath
-	buf              bytes.Buffer
-	packageNames     map[GoImportPath]GoPackageName
-	usedPackageNames map[GoPackageName]bool
-	manualImports    map[GoImportPath]bool
-	// ImportRewriteFunc is called with the import path of each package
-	// imported by a generated file. It returns the import path to use
-	// for this package.
-	ImportRewriteFunc func(GoImportPath) GoImportPath
+	filename          string                           // 文件名
+	goImportPath      GoImportPath                   // 当前文件的导入路径
+	buf               bytes.Buffer                   // 存储生成的代码内容
+	packageNames      map[GoImportPath]GoPackageName // 记录导入路径到包名的映射
+	usedPackageNames  map[GoPackageName]bool         // 记录已使用的包名，避免冲突
+	manualImports     map[GoImportPath]bool          // 手动导入的包路径
+	ImportRewriteFunc func(GoImportPath) GoImportPath // 导入路径重写函数
 }
 
-// NewGeneratedFile creates a new generated file with the given filename
-// and import path.
+// NewGeneratedFile 创建一个新的生成文件实例
 func NewGeneratedFile(filename string, goImportPath GoImportPath) *GeneratedFile {
 	g := &GeneratedFile{
 		filename:         filename,
@@ -45,16 +38,15 @@ func NewGeneratedFile(filename string, goImportPath GoImportPath) *GeneratedFile
 		manualImports:    make(map[GoImportPath]bool),
 	}
 
-	// All predeclared identifiers in Go are already used.
+	// 将Go预声明标识符标记为已使用
 	for _, s := range types.Universe.Names() {
 		g.usedPackageNames[GoPackageName(s)] = true
 	}
 	return g
 }
 
-// P prints a line to the generated output. It converts each parameter to a
-// string following the same rules as [fmt.Print]. It never inserts spaces
-// between parameters.
+// P 将参数打印到缓冲区，每行结束添加换行符
+// 特殊处理 GoIdent 类型，将其转换为适当的限定名称
 func (g *GeneratedFile) P(v ...any) {
 	for _, x := range v {
 		switch x := x.(type) {
@@ -67,55 +59,53 @@ func (g *GeneratedFile) P(v ...any) {
 	fmt.Fprintln(&g.buf)
 }
 
-// Import ensures a package is imported by the generated file.
-//
-// Packages referenced by [GeneratedFile.QualifiedGoIdent] are automatically imported.
-// Explicitly importing a package with Import is generally only necessary
-// when the import will be blank (import _ "package").
+// Import 添加一个手动导入的包路径
 func (g *GeneratedFile) Import(importPath GoImportPath) {
 	g.manualImports[importPath] = true
 }
 
-// Write implements [io.Writer].
+// Write 实现 io.Writer 接口，将字节写入内部缓冲区
 func (g *GeneratedFile) Write(p []byte) (n int, err error) {
 	return g.buf.Write(p)
 }
 
-// QualifiedGoIdent returns the string to use for a Go identifier.
-//
-// If the identifier is from a different Go package than the generated file,
-// the returned name will be qualified (package.name) and an import statement
-// for the identifier's package will be included in the file.
+// QualifiedGoIdent 返回给定标识符的限定名称（包名.标识符）
+// 如果标识符在同一包中，则只返回标识符名称
 func (g *GeneratedFile) QualifiedGoIdent(ident GoIdent) string {
+	// 如果标识符属于当前包，则直接返回名称
 	if ident.GoImportPath == g.goImportPath {
 		return ident.GoName
 	}
+	
+	// 检查是否已有对应的包名
 	if packageName, ok := g.packageNames[ident.GoImportPath]; ok {
 		return string(packageName) + "." + ident.GoName
 	}
+	
+	// 根据导入路径的基名生成包名
 	packageName := cleanPackageName(path.Base(string(ident.GoImportPath)))
-	for i, orig := 1, packageName; g.usedPackageNames[packageName]; i++ {
-		packageName = orig + GoPackageName(strconv.Itoa(i))
+	
+	// 如果包名已被使用，则添加数字后缀直到找到唯一名称
+	originalName := packageName
+	for i := 1; g.usedPackageNames[packageName]; i++ {
+		packageName = originalName + GoPackageName(strconv.Itoa(i))
 	}
+	
 	g.packageNames[ident.GoImportPath] = packageName
 	g.usedPackageNames[packageName] = true
 	return string(packageName) + "." + ident.GoName
 }
 
-// Content returns the contents of the generated file.
+// Content 获取生成的文件内容，如果文件是Go源码则自动处理导入声明
 func (g *GeneratedFile) Content() ([]byte, error) {
 	if !strings.HasSuffix(g.filename, ".go") {
 		return g.buf.Bytes(), nil
 	}
 
-	// Reformat generated code.
 	original := g.buf.Bytes()
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, "", original, parser.ParseComments)
 	if err != nil {
-		// Print out the bad code with line numbers.
-		// This should never happen in practice, but it can while changing generated code
-		// so consider this a debugging aid.
 		var src bytes.Buffer
 		s := bufio.NewScanner(bytes.NewReader(original))
 		for line := 1; s.Scan(); line++ {
@@ -124,7 +114,7 @@ func (g *GeneratedFile) Content() ([]byte, error) {
 		return nil, fmt.Errorf("%v: unparsable Go source: %v\n%v", g.filename, err, src.String())
 	}
 
-	// Collect a sorted list of all imports.
+	// 准备导入路径列表
 	var importPaths [][2]string
 	rewriteImport := func(importPath string) string {
 		if f := g.ImportRewriteFunc; f != nil {
@@ -132,25 +122,28 @@ func (g *GeneratedFile) Content() ([]byte, error) {
 		}
 		return importPath
 	}
-	for importPath := range g.packageNames {
-		pkgName := string(g.packageNames[GoImportPath(importPath)])
+	
+	// 添加由标识符引用产生的导入
+	for importPath, packageName := range g.packageNames {
+		pkgName := string(packageName)
 		pkgPath := rewriteImport(string(importPath))
 		importPaths = append(importPaths, [2]string{pkgName, pkgPath})
 	}
+	
+	// 添加手动导入的包（如果没有被引用过，使用 _ 作为空白导入）
 	for importPath := range g.manualImports {
 		if _, ok := g.packageNames[importPath]; !ok {
 			pkgPath := rewriteImport(string(importPath))
 			importPaths = append(importPaths, [2]string{"_", pkgPath})
 		}
 	}
+	
+	// 按路径排序导入
 	sort.Slice(importPaths, func(i, j int) bool {
 		return importPaths[i][1] < importPaths[j][1]
 	})
 
-	// Modify the AST to include a new import block.
 	if len(importPaths) > 0 {
-		// Insert block after package statement or
-		// possible comment attached to the end of the package statement.
 		pos := file.Package
 		tokFile := fset.File(file.Package)
 		pkgLine := tokFile.Line(file.Package)
@@ -161,7 +154,6 @@ func (g *GeneratedFile) Content() ([]byte, error) {
 			pos = c.End()
 		}
 
-		// Construct the import block.
 		impDecl := &ast.GenDecl{
 			Tok:    token.IMPORT,
 			TokPos: pos,
@@ -192,12 +184,10 @@ func (g *GeneratedFile) Content() ([]byte, error) {
 	return out.Bytes(), nil
 }
 
-// Comments is a comments string as provided by protoc.
+// Comments 表示Go代码中的注释
 type Comments string
 
-// String formats the comments by inserting // to the start of each line,
-// ensuring that there is a trailing newline.
-// An empty comment is formatted as an empty string.
+// String 将注释转换为Go代码中的注释格式
 func (c Comments) String() string {
 	if c == "" {
 		return ""
@@ -211,30 +201,30 @@ func (c Comments) String() string {
 	return string(b)
 }
 
-// A GoIdent is a Go identifier, consisting of a name and import path.
-// The name is a single identifier and may not be a dot-qualified selector.
+// GoIdent 表示Go代码中的标识符，包括名称和所属的导入路径
 type GoIdent struct {
-	GoName       string
-	GoImportPath GoImportPath
+	GoName       string       // 标识符名称
+	GoImportPath GoImportPath // 所属包的导入路径
 }
 
+// String 返回标识符的字符串表示
 func (id GoIdent) String() string { return fmt.Sprintf("%q.%v", id.GoImportPath, id.GoName) }
 
-// A GoImportPath is the import path of a Go package.
-// For example: "google.golang.org/protobuf/compiler/protogen"
+// GoImportPath 表示Go代码中的导入路径
 type GoImportPath string
 
+// String 返回导入路径的字符串表示
 func (p GoImportPath) String() string { return strconv.Quote(string(p)) }
 
-// Ident returns a GoIdent with s as the GoName and p as the GoImportPath.
+// Ident 根据名称创建一个在该导入路径下的标识符
 func (p GoImportPath) Ident(s string) GoIdent {
 	return GoIdent{GoName: s, GoImportPath: p}
 }
 
-// A GoPackageName is the name of a Go package. e.g., "protobuf".
+// GoPackageName 表示Go代码中的包名
 type GoPackageName string
 
-// cleanPackageName converts a string to a valid Go package name.
+// cleanPackageName 清理包名，确保其符合Go命名规则
 func cleanPackageName(name string) GoPackageName {
 	return GoPackageName(stringx.GoSanitized(name))
 }
