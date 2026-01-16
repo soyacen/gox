@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/go-leo/gox/backoff"
+	"github.com/soyacen/gox/backoff"
 )
 
 func TestCall(t *testing.T) {

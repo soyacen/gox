@@ -3,7 +3,7 @@ package addrx
 import (
 	"errors"
 	"fmt"
-	"github.com/go-leo/gox/errorx"
+	"github.com/soyacen/gox/errorx"
 	"math"
 	"net"
 	"net/http"

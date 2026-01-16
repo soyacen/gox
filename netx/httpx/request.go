@@ -19,7 +19,7 @@ import (
 	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/go-leo/gox/stringx"
+	"github.com/soyacen/gox/stringx"
 )
 
 // Deprecated: Do not use. use github.com/go-leo/netx/httpx/outgoing instead.

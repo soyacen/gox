@@ -17,8 +17,8 @@ import (
 	"time"
 
 	"github.com/go-leo/gonv"
-	"github.com/go-leo/gox/iox"
-	"github.com/go-leo/gox/netx/httpx"
+	"github.com/soyacen/gox/iox"
+	"github.com/soyacen/gox/netx/httpx"
 	"github.com/google/go-querystring/query"
 	"google.golang.org/protobuf/proto"
 )

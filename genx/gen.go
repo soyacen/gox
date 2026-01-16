@@ -8,7 +8,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/go-leo/gox/stringx"
+	"github.com/soyacen/gox/stringx"
 	"go/ast"
 	"go/parser"
 	"go/printer"

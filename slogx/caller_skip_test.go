@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-leo/gox/slogx"
+	"github.com/soyacen/gox/slogx"
 )
 
 // TestWithCallerSkipHandle 测试 WithCallerSkipHandle 函数是否正确包装 Handler

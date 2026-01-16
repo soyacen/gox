@@ -8,7 +8,7 @@ import (
 	"sync"                // For synchronization primitives like sync.Pool.
 
 	"github.com/go-leo/goconc/poolx"
-	"github.com/go-leo/gox/errorx"
+	"github.com/soyacen/gox/errorx"
 	// A custom package for managing byte buffers.
 )
 

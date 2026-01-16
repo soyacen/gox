@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/go-leo/gox/stringx"
+	"github.com/soyacen/gox/stringx"
 )
 
 /**

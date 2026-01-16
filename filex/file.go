@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/go-leo/gox/stringx"
+	"github.com/soyacen/gox/stringx"
 )
 
 func Lines(file *os.File) iter.Seq[[]byte] {

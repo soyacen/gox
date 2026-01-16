@@ -1,4 +1,4 @@
-module github.com/go-leo/gox
+module github.com/soyacen/gox
 
 go 1.23.0
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/go-leo/gox/backoff"
+	"github.com/soyacen/gox/backoff"
 )
 
 // Strategy 接口定义了一个 Backoff 方法，用于设置重试间隔策略。

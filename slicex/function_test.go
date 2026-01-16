@@ -1,8 +1,8 @@
 package slicex_test
 
 import (
-	"github.com/go-leo/gox/mathx/randx"
-	"github.com/go-leo/gox/slicex"
+	"github.com/soyacen/gox/mathx/randx"
+	"github.com/soyacen/gox/slicex"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/exp/slices"
 	"reflect"

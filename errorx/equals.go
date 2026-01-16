@@ -4,7 +4,7 @@ import (
 	"errors"
 	"reflect"
 
-	"github.com/go-leo/gox/reflectx"
+	"github.com/soyacen/gox/reflectx"
 )
 
 // Equals 判断两个错误是否相等

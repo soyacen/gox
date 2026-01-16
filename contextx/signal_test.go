@@ -4,7 +4,7 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/go-leo/gox/contextx"
+	"github.com/soyacen/gox/contextx"
 )
 
 func TestSignal(t *testing.T) {

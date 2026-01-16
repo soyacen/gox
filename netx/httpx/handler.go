@@ -1,7 +1,7 @@
 package httpx
 
 import (
-	"github.com/go-leo/gox/slicex"
+	"github.com/soyacen/gox/slicex"
 	"net/http"
 )
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/go-leo/gox/operator"
+	"github.com/soyacen/gox/operator"
 )
 
 // ShrinkDeadline calculates a new deadline based on the given duration `dur` and context `ctx`. 

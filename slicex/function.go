@@ -3,9 +3,9 @@ package slicex
 import (
 	"sort"
 
-	"github.com/go-leo/gox/constraintx"
-	"github.com/go-leo/gox/mathx"
-	"github.com/go-leo/gox/mathx/randx"
+	"github.com/soyacen/gox/constraintx"
+	"github.com/soyacen/gox/mathx"
+	"github.com/soyacen/gox/mathx/randx"
 	"golang.org/x/exp/slices"
 )
 

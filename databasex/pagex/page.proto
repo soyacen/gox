@@ -1,6 +1,6 @@
 syntax = "proto3";
 package leo.gox.databasex.pagex;
-option go_package = "github.com/go-leo/gox/databasex/pagex;pagex";
+option go_package = "github.com/soyacen/gox/databasex/pagex;pagex";
 
 import "google/protobuf/timestamp.proto";
 

@@ -9,7 +9,7 @@ import (
 	"net/http"
 
 	"github.com/go-leo/gonv"
-	"github.com/go-leo/gox/errorx"
+	"github.com/soyacen/gox/errorx"
 	"google.golang.org/protobuf/proto"
 )
 

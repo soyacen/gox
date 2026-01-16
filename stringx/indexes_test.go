@@ -1,7 +1,7 @@
 package stringx_test
 
 import (
-	"github.com/go-leo/gox/stringx"
+	"github.com/soyacen/gox/stringx"
 	"testing"
 )
 

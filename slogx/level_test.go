@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/go-leo/gox/slogx"
+	"github.com/soyacen/gox/slogx"
 )
 
 func TestLevelVarHandler_Enabled(t *testing.T) {

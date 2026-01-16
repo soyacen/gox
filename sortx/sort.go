@@ -4,7 +4,7 @@ import (
 	"golang.org/x/exp/constraints"
 	"golang.org/x/exp/slices"
 
-	"github.com/go-leo/gox/slicex"
+	"github.com/soyacen/gox/slicex"
 )
 
 // Asc sorts a slice of any ordered type in ascending order.

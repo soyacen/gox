@@ -2,7 +2,7 @@ package slicex_test
 
 import (
 	"fmt"
-	"github.com/go-leo/gox/slicex"
+	"github.com/soyacen/gox/slicex"
 	"testing"
 )
 

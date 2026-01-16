@@ -5,7 +5,7 @@ import (
 	"testing"
 	"unicode/utf8"
 
-	"github.com/go-leo/gox/stringx"
+	"github.com/soyacen/gox/stringx"
 )
 
 func check(t *testing.T, b *stringx.Builder, want string) {

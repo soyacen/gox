@@ -9,7 +9,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"github.com/go-leo/gox/cryptox/hmacx"
+	"github.com/soyacen/gox/cryptox/hmacx"
 	"golang.org/x/crypto/pkcs12"
 	"net/url"
 	"testing"
