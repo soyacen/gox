@@ -45,6 +45,22 @@ func Sum[S ~[]E, E constraintx.Numeric](s S) E {
 	return r
 }
 
+// Zip 将两个切片对应位置的元素组成新的切片
+func Zip[S ~[]E, E any](s1, s2 S) S {
+	minLen := len(s1)
+	if len(s2) < minLen {
+		minLen = len(s2)
+	}
+
+	r := make(S, minLen*2)
+	for i := 0; i < minLen; i++ {
+		r[i*2] = s1[i]
+		r[i*2+1] = s2[i]
+	}
+
+	return r
+}
+
 func Merge[S ~[]E, E any](ss ...S) S {
 	totalLen := 0
 	for _, s := range ss {
