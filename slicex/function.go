@@ -1,13 +1,49 @@
 package slicex
 
 import (
+	"cmp"
 	"sort"
 
 	"github.com/soyacen/gox/constraintx"
 	"github.com/soyacen/gox/mathx"
-	"github.com/soyacen/gox/mathx/randx"
+	"github.com/soyacen/gox/randx"
 	"golang.org/x/exp/slices"
 )
+
+// Max 获取数组中的最大值
+func Max[S ~[]E, E cmp.Ordered](s S) E {
+	var r E
+	if len(s) == 0 {
+		return r
+	}
+	r = s[0]
+	for i := 1; i < len(s); i++ {
+		r = max(r, s[i])
+	}
+	return r
+}
+
+// Min 获取数组中的最小值
+func Min[S ~[]E, E cmp.Ordered](s S) E {
+	var r E
+	if len(s) == 0 {
+		return r
+	}
+	r = s[0]
+	for i := 1; i < len(s); i++ {
+		r = min(r, s[i])
+	}
+	return r
+}
+
+// Sum 数组求和
+func Sum[S ~[]E, E constraintx.Numeric](s S) E {
+	var r E
+	for _, i := range s {
+		r += i
+	}
+	return r
+}
 
 func Merge[S ~[]E, E any](ss ...S) S {
 	totalLen := 0
@@ -452,15 +488,6 @@ func HasAdjacentDuplicates[S ~[]E, E comparable](s S) bool {
 		}
 	}
 	return false
-}
-
-// Sum 数组求和
-func Sum[S ~[]E, E constraintx.Numeric](s S) E {
-	var r E
-	for _, i := range s {
-		r += i
-	}
-	return r
 }
 
 // ToMap 方法创建一个Map，这个Map由原数组中的每个元素都调用一次提供的函数后的返回值作为Key、每个元素作为Value组成。
