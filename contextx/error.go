@@ -5,23 +5,29 @@ import (
 	"fmt"
 )
 
-type contextError struct {
-	err      error
-	causeErr error
+// Error represents an error that occurred in a context.
+// It contains both the context error (CtxErr) and the underlying cause error (CauseErr).
+type Error struct {
+	// CtxErr is the error from the context (e.g., context cancellation or timeout)
+	CtxErr error
+	// CauseErr is the underlying cause of the context error
+	CauseErr error
 }
 
-func (c contextError) Error() string {
-	return fmt.Sprintf("%v, because %v", c.err, c.causeErr)
+// Error implements the error interface for ContextError.
+// It formats the error string to show both the context error and its cause.
+func (c Error) Error() string {
+	return fmt.Sprintf("%v, because %v", c.CtxErr, c.CauseErr)
 }
 
-func Error(ctx context.Context) error {
-	err := ctx.Err()
-	if err == nil {
+// WrapContextError extracts and wraps errors from the given context.
+// It returns a custom Error type containing both the context error and cause error.
+// If no errors are present in the context, it returns nil.
+func WrapContextError(ctx context.Context) error {
+	ctxErr := ctx.Err()
+	causeErr := context.Cause(ctx)
+	if ctxErr == nil && causeErr == nil {
 		return nil
 	}
-	causeErr := context.Cause(ctx)
-	if causeErr == nil {
-		return err
-	}
-	return contextError{err: err, causeErr: causeErr}
+	return Error{CtxErr: ctxErr, CauseErr: causeErr}
 }
