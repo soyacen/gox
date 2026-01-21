@@ -8,8 +8,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/go-leo/gonv"
 	"github.com/soyacen/gox/errorx"
+	"github.com/soyacen/gox/strconvx"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -114,7 +114,7 @@ func (r *receiver) TextBody() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return gonv.BytesToString(bodyBytes), nil
+	return strconvx.BytesToString(bodyBytes), nil
 }
 
 func (r *receiver) ObjectBody(body any, unmarshal func([]byte, any) error) error {

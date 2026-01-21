@@ -16,10 +16,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-leo/gonv"
+	"github.com/google/go-querystring/query"
 	"github.com/soyacen/gox/iox"
 	"github.com/soyacen/gox/netx/httpx"
-	"github.com/google/go-querystring/query"
+	"github.com/soyacen/gox/strconvx"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -331,7 +331,7 @@ func (s *sender) BasicAuth(username, password string) PayloadSender {
 	if s.err != nil {
 		return s
 	}
-	token := base64.StdEncoding.EncodeToString(gonv.StringToBytes(username + ":" + password))
+	token := base64.StdEncoding.EncodeToString(strconvx.StringToBytes(username + ":" + password))
 	return s.CustomAuth("Basic", token)
 }
 
@@ -405,7 +405,7 @@ func (s *sender) Body(body io.Reader, contentType string) PayloadSender {
 	s.Header("Content-Type", contentType)
 	l, ok := iox.Len(body)
 	if ok {
-		s.Header("Content-Length", gonv.String[string](l))
+		s.Header("Content-Length", strconvx.FormatUint(l, 10))
 	}
 	return s
 }

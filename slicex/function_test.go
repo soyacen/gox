@@ -1,12 +1,13 @@
 package slicex_test
 
 import (
-	"github.com/soyacen/gox/mathx/randx"
+	"reflect"
+	"testing"
+
+	"github.com/soyacen/gox/randx"
 	"github.com/soyacen/gox/slicex"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/exp/slices"
-	"reflect"
-	"testing"
 )
 
 func TestMerge(t *testing.T) {
@@ -196,7 +197,7 @@ func BenchmarkUniqV1(b *testing.B) {
 		arr = append(arr, i)
 	}
 	for i := 0; i < b.N; i++ {
-		slices.Contains(arr, randx.Intn(100000000))
+		slices.Contains(arr, randx.IntN(100000000))
 	}
 }
 
@@ -207,12 +208,12 @@ func BenchmarkUniqV1(b *testing.B) {
 // BenchmarkUniqV2-8   	  110120	     10404 ns/op
 // enchmarkUniqV2-8   	  100659	     10100 ns/op
 func BenchmarkUniqV2(b *testing.B) {
-	var arr = map[int]struct{}{}
+	arr := map[int]struct{}{}
 	for i := 0; i < 180; i++ {
 		arr[i] = struct{}{}
 	}
 	for i := 0; i < b.N; i++ {
-		_, _ = arr[randx.Intn(100000000)]
+		_, _ = arr[randx.IntN(100000000)]
 	}
 }
 
@@ -317,5 +318,4 @@ func TestChunk(t *testing.T) {
 		}
 		t.Log(chunks)
 	}
-
 }

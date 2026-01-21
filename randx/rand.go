@@ -7,7 +7,7 @@ import (
 	randv2 "math/rand/v2" // The version 2 of Go's math/rand package, offering better PRNGs.
 	"sync"                // For synchronization primitives like sync.Pool.
 
-	"github.com/go-leo/goconc/poolx"
+	"github.com/soyacen/goconc/poolx"
 	"github.com/soyacen/gox/errorx"
 	// A custom package for managing byte buffers.
 )

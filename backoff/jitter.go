@@ -2,9 +2,10 @@ package backoff
 
 import (
 	"context"
-	"github.com/soyacen/gox/mathx/randx/v2"
 	"math/rand/v2"
 	"time"
+
+	"github.com/soyacen/gox/randx"
 )
 
 // JitterUp adds random jitter to the interval.

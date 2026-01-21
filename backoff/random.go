@@ -2,7 +2,7 @@ package backoff
 
 import (
 	"context"
-	"github.com/soyacen/gox/mathx/randx/v2"
+	"github.com/soyacen/gox/randx"
 	"time"
 )
 
