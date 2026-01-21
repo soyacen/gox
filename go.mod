@@ -5,11 +5,11 @@ go 1.24.0
 require (
 	github.com/google/go-querystring v1.2.0
 	github.com/petermattis/goid v0.0.0-20260113132338-7c7de50cc741
-	github.com/soyacen/goconc v0.0.0-20260121063815-81169cee4bb1
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/crypto v0.47.0
 	golang.org/x/exp v0.0.0-20260112195511-716be5621a96
 	golang.org/x/image v0.35.0
+	golang.org/x/sync v0.19.0
 	golang.org/x/text v0.33.0
 	golang.org/x/tools v0.41.0
 	google.golang.org/protobuf v1.36.11
