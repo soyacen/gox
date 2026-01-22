@@ -17,8 +17,8 @@ import (
 	"time"
 
 	"github.com/google/go-querystring/query"
+	"github.com/soyacen/gox/httpx"
 	"github.com/soyacen/gox/iox"
-	"github.com/soyacen/gox/netx/httpx"
 	"github.com/soyacen/gox/strconvx"
 	"google.golang.org/protobuf/proto"
 )
