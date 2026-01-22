@@ -70,6 +70,7 @@ type URLSender interface {
 	URLString(urlString string) PayloadSender
 }
 
+
 type querySender interface {
 	Query(name, value string) PayloadSender
 	AddQuery(key, value string) PayloadSender
@@ -141,9 +142,10 @@ type PayloadSender interface {
 	// Body methods
 	bodySender
 
-	// other methods
+	// Middleware methods
 	Middleware(middlewares ...Middleware) PayloadSender
-	Build(ctx context.Context) (*http.Request, error)
+
+	// Send method
 	Send(ctx context.Context, cli ...*http.Client) (Receiver, error)
 }
 
@@ -514,7 +516,7 @@ func (s *sender) Middleware(middlewares ...Middleware) PayloadSender {
 	return s
 }
 
-func (s *sender) Build(ctx context.Context) (*http.Request, error) {
+func (s *sender) Send(ctx context.Context, clients ...*http.Client) (Receiver, error) {
 	if s.err != nil {
 		return nil, s.err
 	}
@@ -542,17 +544,6 @@ func (s *sender) Build(ctx context.Context) (*http.Request, error) {
 		for _, cookie := range cookies {
 			req.AddCookie(cookie)
 		}
-	}
-	return req, nil
-}
-
-func (s *sender) Send(ctx context.Context, clients ...*http.Client) (Receiver, error) {
-	if s.err != nil {
-		return nil, s.err
-	}
-	req, err := s.Build(ctx)
-	if err != nil {
-		return nil, err
 	}
 	var cli *http.Client
 	if len(clients) > 0 && clients[0] != nil {
