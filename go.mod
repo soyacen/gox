@@ -3,7 +3,6 @@ module github.com/soyacen/gox
 go 1.24.0
 
 require (
-	github.com/google/go-querystring v1.2.0
 	github.com/petermattis/goid v0.0.0-20260113132338-7c7de50cc741
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/crypto v0.47.0
