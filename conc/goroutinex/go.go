@@ -1,4 +1,4 @@
-package runtimex
+package goroutinex
 
 import (
 	"github.com/petermattis/goid"
