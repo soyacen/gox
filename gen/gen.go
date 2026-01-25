@@ -1,4 +1,4 @@
-package genx
+package gen
 
 import (
 	"bufio"
@@ -17,20 +17,20 @@ import (
 	"github.com/soyacen/gox/stringx"
 )
 
-// GeneratedFile 表示一个正在生成的Go源文件
-type GeneratedFile struct {
-	filename          string                           // 文件名
-	goImportPath      GoImportPath                   // 当前文件的导入路径
-	buf               bytes.Buffer                   // 存储生成的代码内容
-	packageNames      map[GoImportPath]GoPackageName // 记录导入路径到包名的映射
-	usedPackageNames  map[GoPackageName]bool         // 记录已使用的包名，避免冲突
-	manualImports     map[GoImportPath]bool          // 手动导入的包路径
+// CodeWriter 表示一个正在生成的Go源文件
+type CodeWriter struct {
+	filename          string                          // 文件名
+	goImportPath      GoImportPath                    // 当前文件的导入路径
+	buf               bytes.Buffer                    // 存储生成的代码内容
+	packageNames      map[GoImportPath]GoPackageName  // 记录导入路径到包名的映射
+	usedPackageNames  map[GoPackageName]bool          // 记录已使用的包名，避免冲突
+	manualImports     map[GoImportPath]bool           // 手动导入的包路径
 	ImportRewriteFunc func(GoImportPath) GoImportPath // 导入路径重写函数
 }
 
-// NewGeneratedFile 创建一个新的生成文件实例
-func NewGeneratedFile(filename string, goImportPath GoImportPath) *GeneratedFile {
-	g := &GeneratedFile{
+// NewCodeWriter 创建一个新的生成文件实例
+func NewCodeWriter(filename string, goImportPath GoImportPath) *CodeWriter {
+	g := &CodeWriter{
 		filename:         filename,
 		goImportPath:     goImportPath,
 		packageNames:     make(map[GoImportPath]GoPackageName),
@@ -47,7 +47,7 @@ func NewGeneratedFile(filename string, goImportPath GoImportPath) *GeneratedFile
 
 // P 将参数打印到缓冲区，每行结束添加换行符
 // 特殊处理 GoIdent 类型，将其转换为适当的限定名称
-func (g *GeneratedFile) P(v ...any) {
+func (g *CodeWriter) P(v ...any) {
 	for _, x := range v {
 		switch x := x.(type) {
 		case GoIdent:
@@ -60,44 +60,44 @@ func (g *GeneratedFile) P(v ...any) {
 }
 
 // Import 添加一个手动导入的包路径
-func (g *GeneratedFile) Import(importPath GoImportPath) {
+func (g *CodeWriter) Import(importPath GoImportPath) {
 	g.manualImports[importPath] = true
 }
 
 // Write 实现 io.Writer 接口，将字节写入内部缓冲区
-func (g *GeneratedFile) Write(p []byte) (n int, err error) {
+func (g *CodeWriter) Write(p []byte) (n int, err error) {
 	return g.buf.Write(p)
 }
 
 // QualifiedGoIdent 返回给定标识符的限定名称（包名.标识符）
 // 如果标识符在同一包中，则只返回标识符名称
-func (g *GeneratedFile) QualifiedGoIdent(ident GoIdent) string {
+func (g *CodeWriter) QualifiedGoIdent(ident GoIdent) string {
 	// 如果标识符属于当前包，则直接返回名称
 	if ident.GoImportPath == g.goImportPath {
 		return ident.GoName
 	}
-	
+
 	// 检查是否已有对应的包名
 	if packageName, ok := g.packageNames[ident.GoImportPath]; ok {
 		return string(packageName) + "." + ident.GoName
 	}
-	
+
 	// 根据导入路径的基名生成包名
 	packageName := cleanPackageName(path.Base(string(ident.GoImportPath)))
-	
+
 	// 如果包名已被使用，则添加数字后缀直到找到唯一名称
 	originalName := packageName
 	for i := 1; g.usedPackageNames[packageName]; i++ {
 		packageName = originalName + GoPackageName(strconv.Itoa(i))
 	}
-	
+
 	g.packageNames[ident.GoImportPath] = packageName
 	g.usedPackageNames[packageName] = true
 	return string(packageName) + "." + ident.GoName
 }
 
 // Content 获取生成的文件内容，如果文件是Go源码则自动处理导入声明
-func (g *GeneratedFile) Content() ([]byte, error) {
+func (g *CodeWriter) Content() ([]byte, error) {
 	if !strings.HasSuffix(g.filename, ".go") {
 		return g.buf.Bytes(), nil
 	}
@@ -122,14 +122,14 @@ func (g *GeneratedFile) Content() ([]byte, error) {
 		}
 		return importPath
 	}
-	
+
 	// 添加由标识符引用产生的导入
 	for importPath, packageName := range g.packageNames {
 		pkgName := string(packageName)
 		pkgPath := rewriteImport(string(importPath))
 		importPaths = append(importPaths, [2]string{pkgName, pkgPath})
 	}
-	
+
 	// 添加手动导入的包（如果没有被引用过，使用 _ 作为空白导入）
 	for importPath := range g.manualImports {
 		if _, ok := g.packageNames[importPath]; !ok {
@@ -137,7 +137,7 @@ func (g *GeneratedFile) Content() ([]byte, error) {
 			importPaths = append(importPaths, [2]string{"_", pkgPath})
 		}
 	}
-	
+
 	// 按路径排序导入
 	sort.Slice(importPaths, func(i, j int) bool {
 		return importPaths[i][1] < importPaths[j][1]
