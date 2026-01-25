@@ -14,13 +14,24 @@ import (
 	"github.com/soyacen/gox/stringx"
 )
 
+// Lines 将文件按行分割并返回一个迭代器序列，每次迭代返回一行字节切片
+//
+// 参数:
+//
+//	file - 需要读取的文件对象指针
+//
+// 返回值:
+//
+//	iter.Seq[[]byte] - 返回一个字节切片的迭代器序列，每个元素代表文件中的一行
 func Lines(file *os.File) iter.Seq[[]byte] {
 	return func(yield func([]byte) bool) {
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
+			// 检查扫描过程中是否出现错误
 			if scanner.Err() != nil {
 				return
 			}
+			// 将当前行数据传递给yield函数，并检查是否需要继续迭代
 			if !yield(scanner.Bytes()) {
 				return
 			}
