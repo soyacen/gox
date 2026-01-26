@@ -1,4 +1,4 @@
-package goconc
+package conc
 
 // NoCopy may be added to structs which must not be copied
 // after the first use.
@@ -11,8 +11,7 @@ type NoCopy struct{}
 
 // Lock is a no-op used by -copylocks checker from `go vet`.
 func (*NoCopy) Lock() { // Noncompliance
-
 }
-func (*NoCopy) Unlock() { // Noncompliance
 
+func (*NoCopy) Unlock() { // Noncompliance
 }
