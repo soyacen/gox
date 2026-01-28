@@ -1,6 +1,6 @@
 module github.com/soyacen/gox
 
-go 1.24.0
+go 1.25.0
 
 require (
 	github.com/petermattis/goid v0.0.0-20260113132338-7c7de50cc741

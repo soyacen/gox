@@ -1,0 +1,66 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to update to (e.g., v1.2.3)'
+        required: true
+
+jobs:
+  update-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # 需要写入权限来直接提交更改
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main  # 总是检出 main 分支
+          token: ${{ secrets.GITHUB_TOKEN }}
+        
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.6'
+          
+      - name: Validate and use input version
+        id: get_version
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Using input version: $VERSION"
+          
+          # 验证版本格式
+          if ! [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+            echo "Error: Version does not match pattern vX.Y.Z"
+            exit 1
+          fi
+          
+      - name: Instructions for tagging
+        run: |
+          echo "Version updated to $VERSION"
+          echo ""
+          echo "Now run the following commands to create and push the tag:"
+          echo "git tag $VERSION"
+          echo "git push origin $VERSION"
+          echo ""
+          echo "After pushing the tag, the release workflow will automatically run."
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.VERSION }}
+          release_name: Release ${{ env.VERSION }}
+          draft: false
+          prerelease: false
+          
+      - name: Output completion message
+        run: |
+          echo "Version updated to ${{ env.VERSION }}"
+          echo "Tag ${{ env.VERSION }} has been created and pushed automatically"
+          echo "Release workflow will run automatically after pushing the tag."
