@@ -10,8 +10,3 @@ func ParseBytesSlice(s []string) [][]byte {
 	}
 	return r
 }
-
-// func ParseWrapperString(s string) (*wrapperspb.StringValue, error) {
-// 	wrapperspb.Bytes()
-// 	return wrapperspb.String(s), nil
-// }
