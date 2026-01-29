@@ -38,20 +38,6 @@ var (
 	whitespaceRe      = regexp.MustCompile(`^[\s\xa0]*$`)
 )
 
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 // Between extracts a string between left and right strings.
 func Between(s, left, right string) string {
 	l := len(left)
