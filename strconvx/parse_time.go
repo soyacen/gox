@@ -104,29 +104,29 @@ func ParseWrapperMonth(s string, layout string, loc *time.Location) (month.Month
 	}
 	switch v.Month() {
 	case time.January:
-		return month.Month_JANUARY
+		return month.Month_JANUARY, nil
 	case time.February:
-		return month.Month_FEBRUARY
+		return month.Month_FEBRUARY, nil
 	case time.March:
-		return month.Month_MARCH
+		return month.Month_MARCH, nil
 	case time.April:
-		return month.Month_APRIL
+		return month.Month_APRIL, nil
 	case time.May:
-		return month.Month_MAY
+		return month.Month_MAY, nil
 	case time.June:
-		return month.Month_JUNE
+		return month.Month_JUNE, nil
 	case time.July:
-		return month.Month_JULY
+		return month.Month_JULY, nil
 	case time.August:
-		return month.Month_AUGUST
+		return month.Month_AUGUST, nil
 	case time.September:
-		return month.Month_SEPTEMBER
+		return month.Month_SEPTEMBER, nil
 	case time.October:
-		return month.Month_OCTOBER
+		return month.Month_OCTOBER, nil
 	case time.November:
-		return month.Month_NOVEMBER
+		return month.Month_NOVEMBER, nil
 	case time.December:
-		return month.Month_DECEMBER
+		return month.Month_DECEMBER, nil
 	}
 	return month.Month_MONTH_UNSPECIFIED, errors.New("invalid month")
 }
