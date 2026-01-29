@@ -4,7 +4,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/month"
 	"google.golang.org/genproto/googleapis/type/date"
 	"google.golang.org/genproto/googleapis/type/datetime"
 	"google.golang.org/genproto/googleapis/type/dayofweek"
