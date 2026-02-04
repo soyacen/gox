@@ -2,10 +2,10 @@
 package slogx
 
 import (
-	"context"       // 用于上下文处理
-	"encoding/json" // 用于JSON数据解析
-	"log/slog"      // Go标准库的日志包
-	"net/http"      // 用于HTTP服务处理
+	"context" // 用于上下文处理
+	// 用于JSON数据解析
+	"log/slog" // Go标准库的日志包
+	"net/http" // 用于HTTP服务处理
 )
 
 // DebugLevel 返回一个设置为 DEBUG 级别的 LevelVar
@@ -75,42 +75,27 @@ func (h *levelVarHandler) Enabled(ctx context.Context, level slog.Level) bool {
 func (h *levelVarHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	switch req.Method {
 	case http.MethodGet:
-		// 返回当前日志级别
-		body := map[string]string{}
 		text, err := h.levelVar.MarshalText()
 		if err != nil {
 			resp.WriteHeader(http.StatusInternalServerError)
 			_, _ = resp.Write([]byte("Internal Server Error"))
 			return
 		}
-		body["level"] = string(text)
+
 		resp.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(resp).Encode(body)
+		_, _ = resp.Write(text)
 	case http.MethodPost:
-		// 解析请求体中的JSON数据
-		decoder := json.NewDecoder(req.Body)
-		body := map[string]string{}
+		level := req.PathValue("level")
 
-		// 如果JSON解析失败，返回 400 Bad Request 错误
-		if err := decoder.Decode(&body); err != nil {
+		if err := h.levelVar.UnmarshalText([]byte(level)); err != nil {
 			resp.WriteHeader(http.StatusBadRequest)
 			_, _ = resp.Write([]byte("Bad Request"))
 			return
 		}
 
-		// 从请求体中提取level字段，并尝试更新日志级别
-		// 如果级别解析失败，返回 400 Bad Request 错误
-		if err := h.levelVar.UnmarshalText([]byte(body["level"])); err != nil {
-			resp.WriteHeader(http.StatusBadRequest)
-			_, _ = resp.Write([]byte("Bad Request"))
-			return
-		}
-
-		// 成功更新日志级别，返回 200 OK
 		resp.WriteHeader(http.StatusOK)
 		_, _ = resp.Write([]byte("OK"))
 	default:
-		// 返回 405 Method Not Allowed 错误
 		resp.WriteHeader(http.StatusMethodNotAllowed)
 		_, _ = resp.Write([]byte("Method Not Allowed"))
 	}
