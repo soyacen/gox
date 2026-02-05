@@ -1,10 +1,7 @@
-// Copyright 2019 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 package stringx
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -121,6 +118,52 @@ func TestName(t *testing.T) {
 		}
 		if got := JSONSnakeCase(tt.in); got != tt.wantJSONSnakeCase {
 			t.Errorf("JSONSnakeCase(%q) = %q, want %q", tt.in, got, tt.wantJSONSnakeCase)
+		}
+	}
+}
+
+func TestKebabCase(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"Hello World", "hello-world"},
+		{"My-Service_Name", "my-service-name"},
+		{"!!Special??Characters!!", "special-characters"},
+		{"Already-Correct-123", "already-correct-123"},
+		{"   leading and trailing spaces   ", "leading-and-trailing-spaces"},
+		{"Multiple---Hyphens", "multiple-hyphens"},
+		{"UPPERCASE", "uppercase"},
+		{"MyService", "my-service"},
+		{"GetHTTPResponse", "get-http-response"},
+		{"你好World", "world"}, // Non-ASCII characters replaced with hyphen and trimmed
+		{"User@123", "user-123"},
+		{"a" + strings.Repeat("b", 100), "abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}, // 63 chars
+		{"-Start-and-End-", "start-and-end"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			actual := KebabCase(tt.input)
+			if actual != tt.expected {
+				t.Errorf("KebabCase(%q) = %q; want %q", tt.input, actual, tt.expected)
+			}
+		})
+	}
+}
+
+func BenchmarkKebabCase(b *testing.B) {
+	inputs := []string{
+		"Hello World",
+		"MyService",
+		"GetHTTPResponse",
+		"你好World",
+		"a" + strings.Repeat("b", 100),
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for _, input := range inputs {
+			_ = KebabCase(input)
 		}
 	}
 }

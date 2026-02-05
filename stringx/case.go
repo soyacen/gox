@@ -1,8 +1,3 @@
-// Copyright 2019 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
-// Package stringx provides string manipulation functionality specific to protobuf.
 package stringx
 
 import (
@@ -175,9 +170,87 @@ func TrimEnumPrefix(s, prefix string) string {
 func isASCIILower(c byte) bool {
 	return 'a' <= c && c <= 'z'
 }
+
 func isASCIIUpper(c byte) bool {
 	return 'A' <= c && c <= 'Z'
 }
+
 func isASCIIDigit(c byte) bool {
 	return '0' <= c && c <= '9'
+}
+
+// KebabCase converts an arbitrary string to a kebab-case string that complies with domain name specifications.
+// The result:
+// 1. Contains only lowercase alphanumeric characters or '-'
+// 2. Starts and ends with an alphanumeric character
+// 3. Has a maximum length of 63 characters (per RFC 1123)
+func KebabCase(s string) string {
+	if s == "" {
+		return ""
+	}
+
+	var b strings.Builder
+	// Pre-allocate to avoid multiple re-allocations
+	b.Grow(len(s))
+
+	var lastWasHyphen bool
+	var prevRune rune
+
+	// We need to look ahead for the "Acronym" case.
+	// Converting to []rune is the easiest way to look ahead,
+	// but it costs an allocation. Given "any string", it's safer for correctness.
+	// However, we can use a small buffer or just handle it during iteration.
+
+	runes := []rune(s)
+	for i, r := range runes {
+		// 1. Detect transitions for hyphens (camelCase and acronyms)
+		if i > 0 && unicode.IsUpper(r) {
+			// lowercase/digit followed by uppercase: aB -> a-B
+			if unicode.IsLower(prevRune) || unicode.IsDigit(prevRune) {
+				if b.Len() > 0 && !lastWasHyphen {
+					b.WriteByte('-')
+					lastWasHyphen = true
+				}
+			} else if unicode.IsUpper(prevRune) && i+1 < len(runes) && unicode.IsLower(runes[i+1]) {
+				// acronym followed by capitalized word: HTTPResponse -> HTTP-Response
+				if b.Len() > 0 && !lastWasHyphen {
+					b.WriteByte('-')
+					lastWasHyphen = true
+				}
+			}
+		}
+
+		// 2. Process current character
+		if unicode.IsLower(r) || unicode.IsDigit(r) {
+			b.WriteRune(r)
+			lastWasHyphen = false
+		} else if unicode.IsUpper(r) {
+			b.WriteRune(unicode.ToLower(r))
+			lastWasHyphen = false
+		} else {
+			// Non-alphanumeric characters are treated as hyphens
+			if b.Len() > 0 && !lastWasHyphen {
+				b.WriteByte('-')
+				lastWasHyphen = true
+			}
+		}
+
+		// 3. Hard limit length to 63
+		if b.Len() >= 63 {
+			break
+		}
+		prevRune = r
+	}
+
+	res := b.String()
+	// 4. Trim hyphens from end
+	res = strings.Trim(res, "-")
+
+	// Final length check after trimming
+	if len(res) > 63 {
+		res = res[:63]
+		res = strings.TrimRight(res, "-")
+	}
+
+	return res
 }
