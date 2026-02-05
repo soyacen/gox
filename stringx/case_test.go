@@ -167,3 +167,27 @@ func BenchmarkKebabCase(b *testing.B) {
 		}
 	}
 }
+
+func TestDotCase(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"Hello World", "hello.world"},
+		{"My-Service_Name", "my.service.name"},
+		{"!!Special??Characters!!", "special.characters"},
+		{"Already.Correct.123", "already.correct.123"},
+		{"MyService", "my.service"},
+		{"GetHTTPResponse", "get.http.response"},
+		{"你好World", "world"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			actual := DotCase(tt.input)
+			if actual != tt.expected {
+				t.Errorf("DotCase(%q) = %q; want %q", tt.input, actual, tt.expected)
+			}
+		})
+	}
+}

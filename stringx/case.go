@@ -180,11 +180,16 @@ func isASCIIDigit(c byte) bool {
 }
 
 // KebabCase converts an arbitrary string to a kebab-case string that complies with domain name specifications.
-// The result:
-// 1. Contains only lowercase alphanumeric characters or '-'
-// 2. Starts and ends with an alphanumeric character
-// 3. Has a maximum length of 63 characters (per RFC 1123)
 func KebabCase(s string) string {
+	return formatCase(s, '-')
+}
+
+// DotCase converts an arbitrary string to a dot-case string (e.g., service.name).
+func DotCase(s string) string {
+	return formatCase(s, '.')
+}
+
+func formatCase(s string, sep byte) string {
 	if s == "" {
 		return ""
 	}
@@ -193,29 +198,25 @@ func KebabCase(s string) string {
 	// Pre-allocate to avoid multiple re-allocations
 	b.Grow(len(s))
 
-	var lastWasHyphen bool
+	var lastWasSep bool
 	var prevRune rune
 
 	// We need to look ahead for the "Acronym" case.
-	// Converting to []rune is the easiest way to look ahead,
-	// but it costs an allocation. Given "any string", it's safer for correctness.
-	// However, we can use a small buffer or just handle it during iteration.
-
 	runes := []rune(s)
 	for i, r := range runes {
-		// 1. Detect transitions for hyphens (camelCase and acronyms)
+		// 1. Detect transitions for separators (camelCase and acronyms)
 		if i > 0 && unicode.IsUpper(r) {
 			// lowercase/digit followed by uppercase: aB -> a-B
 			if unicode.IsLower(prevRune) || unicode.IsDigit(prevRune) {
-				if b.Len() > 0 && !lastWasHyphen {
-					b.WriteByte('-')
-					lastWasHyphen = true
+				if b.Len() > 0 && !lastWasSep {
+					b.WriteByte(sep)
+					lastWasSep = true
 				}
 			} else if unicode.IsUpper(prevRune) && i+1 < len(runes) && unicode.IsLower(runes[i+1]) {
 				// acronym followed by capitalized word: HTTPResponse -> HTTP-Response
-				if b.Len() > 0 && !lastWasHyphen {
-					b.WriteByte('-')
-					lastWasHyphen = true
+				if b.Len() > 0 && !lastWasSep {
+					b.WriteByte(sep)
+					lastWasSep = true
 				}
 			}
 		}
@@ -223,15 +224,15 @@ func KebabCase(s string) string {
 		// 2. Process current character
 		if unicode.IsLower(r) || unicode.IsDigit(r) {
 			b.WriteRune(r)
-			lastWasHyphen = false
+			lastWasSep = false
 		} else if unicode.IsUpper(r) {
 			b.WriteRune(unicode.ToLower(r))
-			lastWasHyphen = false
+			lastWasSep = false
 		} else {
-			// Non-alphanumeric characters are treated as hyphens
-			if b.Len() > 0 && !lastWasHyphen {
-				b.WriteByte('-')
-				lastWasHyphen = true
+			// Non-alphanumeric characters are treated as separators
+			if b.Len() > 0 && !lastWasSep {
+				b.WriteByte(sep)
+				lastWasSep = true
 			}
 		}
 
@@ -243,13 +244,13 @@ func KebabCase(s string) string {
 	}
 
 	res := b.String()
-	// 4. Trim hyphens from end
-	res = strings.Trim(res, "-")
+	// 4. Trim separators from end
+	res = strings.Trim(res, string(sep))
 
 	// Final length check after trimming
 	if len(res) > 63 {
 		res = res[:63]
-		res = strings.TrimRight(res, "-")
+		res = strings.TrimRight(res, string(sep))
 	}
 
 	return res
