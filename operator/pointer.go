@@ -6,16 +6,10 @@ func Pointer[E any](v E) *E {
 }
 
 // Indirect returns the value pointed to by p.
-func Indirect[P *E, E any](p P) (E, bool) {
+func Indirect[P *E, E any](p P) E {
 	if p == nil {
 		var e E
-		return e, false
+		return e
 	}
-	return *p, true
-}
-
-// IndirectOrZero returns the value pointed to by p or zero value of E.
-func IndirectOrZero[P *E, E any](p P) E {
-	e, _ := Indirect(p)
-	return e
+	return *p
 }
