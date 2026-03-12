@@ -3,6 +3,7 @@ package filex
 import (
 	"archive/zip"
 	"bufio"
+	"context"
 	"io"
 	"io/fs"
 	"iter"
@@ -67,9 +68,15 @@ func Extension(path string) string {
 // 参数：
 // url: 要下载的文件的URL
 // filepath: 保存文件的本地路径
-func Download(url, filepath string) error {
+func Download(ctx context.Context, url, filepath string) error {
+	// 创建请求
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return err
+	}
 	// 发起GET请求
-	resp, err := http.Get(url)
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
