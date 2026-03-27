@@ -7,12 +7,13 @@ import (
 
 // Constant returns a backoff function that waits for a fixed period of time between calls.
 // This is useful when you want consistent retry intervals regardless of the attempt number.
+// Returns 0 when attempt is 0.
 //
 // Parameters:
 //   - delta: The fixed duration to wait between each retry attempt
 //
 // Returns:
-//   - Func: A backoff function that always returns the same duration
+//   - Func: A backoff function that always returns the same duration (or 0 for attempt 0)
 //
 // Example:
 //
@@ -20,6 +21,9 @@ import (
 //	backoff := Constant(5 * time.Second)
 func Constant(delta time.Duration) Func {
 	return func(ctx context.Context, attempt uint) time.Duration {
+		if attempt == 0 {
+			return 0
+		}
 		return delta
 	}
 }

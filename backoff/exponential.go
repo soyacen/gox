@@ -28,6 +28,7 @@ func Exponential(delta time.Duration) Func {
 
 // exponential calculates "delta * e^attempt" duration.
 // This is the core implementation of exponential backoff using natural exponentiation.
+// Returns 0 when attempt is 0.
 //
 // Parameters:
 //   - delta: Base duration multiplier
@@ -36,6 +37,9 @@ func Exponential(delta time.Duration) Func {
 // Returns:
 //   - time.Duration: The calculated backoff duration
 func exponential(delta time.Duration, attempt uint) time.Duration {
+	if attempt == 0 {
+		return 0
+	}
 	return delta * time.Duration(math.Exp(float64(attempt)))
 }
 
