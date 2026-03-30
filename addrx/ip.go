@@ -11,41 +11,49 @@ import (
 	"strings"
 )
 
-// Addrs returns a list of unicast interface addresses for all interface.
+// Addrs returns a list of unicast interface addresses for all interfaces.
+//
+// Returns:
+//   - []net.Addr: List of network interface addresses
+//   - error: Error if failed to get addresses
 func Addrs() ([]net.Addr, error) {
-	// 获取所有网络接口
+	// Get all network interfaces
 	ifaces, err := net.Interfaces()
-	// 如果没有网络接口，返回错误
+	// Return error if no network interfaces found
 	if err != nil {
 		return nil, err
 	}
 	var res []net.Addr
 	var errs []error
-	// 遍历所有网络接口
+	// Iterate over all network interfaces
 	for _, iface := range ifaces {
-		// 获取网络接口的所有地址
+		// Get all addresses for the network interface
 		addrs, err := iface.Addrs()
 		if err != nil {
-			// 如果获取网络接口的所有地址出错，则记录错误并继续循环
+			// Record error and continue if failed to get addresses
 			errs = append(errs, err)
 			continue
 		}
-		// 将网络接口的所有地址添加到结果中
+		// Add all addresses to result
 		res = append(res, addrs...)
 	}
-	// 如果没有网络接口的地址，返回错误
+	// Return error if no addresses found
 	if len(res) <= 0 {
 		return nil, errors.Join(errs...)
 	}
-	// 返回网络接口的所有地址
+	// Return all network interface addresses
 	return res, nil
 }
 
-// IPs returns a list of IPs for all interface.
+// IPs returns a list of IPs for all interfaces.
+//
+// Returns:
+//   - []net.IP: List of IP addresses
+//   - error: Error if failed to get IPs
 func IPs() ([]net.IP, error) {
-	// 获取所有地址
+	// Get all addresses
 	addrs, err := Addrs()
-	// 如果没有地址，返回错误
+	// Return error if no addresses found
 	if len(addrs) == 0 {
 		return nil, err
 	}
@@ -53,16 +61,16 @@ func IPs() ([]net.IP, error) {
 	var res []net.IP
 	errs := errorx.UnwrapMultiErr(err)
 
-	// 遍历所有地址
+	// Iterate over all addresses
 	for _, addr := range addrs {
-		// 解析地址
+		// Parse the address
 		ip, _, err := SplitHostPort(addr)
 		if err != nil {
-			// 如果解析地址出错，则记录错误并继续循环
+			// Record error and continue if parsing fails
 			errs = append(errs, err)
 			continue
 		}
-		// 将IP添加到结果中
+		// Add IP to result
 		res = append(res, ip)
 	}
 	if len(res) <= 0 {
@@ -71,7 +79,11 @@ func IPs() ([]net.IP, error) {
 	return res, nil
 }
 
-// GlobalUnicastIPs returns a list of global unicast IPs for all interface.
+// GlobalUnicastIPs returns a list of global unicast IPs for all interfaces.
+//
+// Returns:
+//   - []net.IP: List of global unicast IP addresses
+//   - error: Error if no global unicast IP found
 func GlobalUnicastIPs() ([]net.IP, error) {
 	ips, err := IPs()
 	if len(ips) == 0 {
@@ -109,7 +121,15 @@ func GlobalUnicastAddr(address net.Addr) (net.IP, int, error) {
 	return ips[0], port, err
 }
 
-// SplitHostPort splits a network address of the form net.Addr,
+// SplitHostPort splits a network address of the form net.Addr into IP and port components.
+//
+// Parameters:
+//   - addr: Network address to split
+//
+// Returns:
+//   - net.IP: The IP address component
+//   - int: The port number
+//   - error: Error if failed to parse the address
 func SplitHostPort(addr net.Addr) (net.IP, int, error) {
 	switch v := addr.(type) {
 	case *net.IPAddr:
@@ -130,7 +150,14 @@ func SplitHostPort(addr net.Addr) (net.IP, int, error) {
 	}
 }
 
-// IsGlobalUnicastIP check whether the IP is a global unicast IP
+// IsGlobalUnicastIP checks whether the IP is a global unicast IP.
+// A global unicast IP is routable on the internet and not a private, loopback, or multicast address.
+//
+// Parameters:
+//   - ip: The IP address to check
+//
+// Returns:
+//   - bool: True if the IP is a global unicast address, false otherwise
 func IsGlobalUnicastIP(ip net.IP) bool {
 	if ip.IsUnspecified() {
 		// 这个方法用于检查给定的 IP 地址是否是未指定的地址。

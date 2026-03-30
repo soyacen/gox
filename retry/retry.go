@@ -7,20 +7,22 @@ import (
 	"github.com/soyacen/gox/backoff"
 )
 
-// Strategy 接口定义了一个 Backoff 方法，用于设置重试间隔策略。
+// Strategy defines the interface for configuring retry behavior with backoff strategies.
+// It provides methods to set backoff functions, retry conditions, and execute commands with retries.
 type Strategy interface {
 
-	// Backoff 方法设置重试间隔策略函数。
+	// Backoff sets the backoff function for retry intervals.
 	Backoff(backoffFunc backoff.Func) Strategy
 
-	// RetryOn 方法判断是否重试。
+	// RetryOn sets the condition function to determine whether to retry on error.
 	RetryOn(retryOnFunc func(err error) bool) Strategy
 
-	// Exec 方法执行一个命令，并允许传递上下文和当前尝试次数。
+	// Exec executes a command with retry logic, accepting context and current attempt number.
 	Exec(ctx context.Context, cmd func(ctx context.Context, attempt uint) error) error
 }
 
-// defaultStrategy 结构体实现了 Retry 和 Executor 接口，并持有最大尝试次数和重试间隔策略函数。
+// defaultStrategy implements the Strategy interface with configurable max attempts,
+// backoff function, and retry condition function.
 type defaultStrategy struct {
 	maxAttempts uint
 	backoffFunc backoff.Func
@@ -63,7 +65,13 @@ func (r *defaultStrategy) Exec(ctx context.Context, cmd func(ctx context.Context
 	return cmd(ctx, attempt)
 }
 
-// MaxAttempts 函数创建一个具有指定最大重试次数的 defaultStrategy 实例。
+// MaxAttempts creates a new defaultStrategy instance with the specified maximum retry attempts.
+//
+// Parameters:
+//   - maxAttempts: The maximum number of retry attempts
+//
+// Returns:
+//   - Strategy: A strategy configured with the given max attempts
 func MaxAttempts(maxAttempts uint) Strategy {
 	return &defaultStrategy{
 		maxAttempts: maxAttempts,
@@ -74,8 +82,17 @@ func MaxAttempts(maxAttempts uint) Strategy {
 	}
 }
 
-// Call 函数执行一个命令，并允许传递上下文、最大尝试次数和重试间隔策略函数。
-// Deprecated: Do not use. use MaxAttempts
+// Call executes a command with context, max attempts, and backoff function.
+// Deprecated: Do not use. Use MaxAttempts instead.
+//
+// Parameters:
+//   - ctx: Context for cancellation
+//   - maxAttempts: Maximum number of retry attempts
+//   - backoffFunc: Backoff function for retry intervals
+//   - method: Function to execute
+//
+// Returns:
+//   - error: Error from execution or nil if successful
 func Call(ctx context.Context, maxAttempts uint, backoffFunc backoff.Func, method func(attemptTime int) error) error {
 	return MaxAttempts(maxAttempts).Backoff(backoffFunc).Exec(ctx, func(ctx context.Context, attempt uint) error {
 		return method(int(attempt))

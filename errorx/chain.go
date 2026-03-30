@@ -1,8 +1,14 @@
 package errorx
 
-// Break 函数是一个高阶函数，用于处理错误并决定是否继续执行另一个函数。
-// 如果pre参数不为nil，它会返回一个零值和pre错误，从而中断后续的执行；
-// 如果pre为nil，则会调用并返回f()的结果。
+// Break is a higher-order function that processes errors and determines whether to continue executing another function.
+// If the pre parameter is not nil, it returns a zero value and the pre error, thus interrupting subsequent execution;
+// If pre is nil, it calls and returns the result of f().
+//
+// Parameters:
+//   - pre: The previous error to check
+//
+// Returns:
+//   - func(func() (T, error)) (T, error): A function that takes a function and returns its result or an error
 func Break[T any](pre error) func(f func() (T, error)) (T, error) {
 	return func(f func() (T, error)) (T, error) {
 		if pre != nil {
@@ -13,7 +19,14 @@ func Break[T any](pre error) func(f func() (T, error)) (T, error) {
 	}
 }
 
-// Continue 函数允许在执行f()之前检查pre错误，如果f()返回错误，它会将这两个错误合并并返回
+// Continue allows checking the pre error before executing f(), and if f() returns an error, it merges both errors and returns them.
+// This is useful for continuing execution even when errors occur, collecting all errors along the way.
+//
+// Parameters:
+//   - pre: The previous error to check
+//
+// Returns:
+//   - func(func() (T, error)) (T, error): A function that executes f() and combines any errors with pre
 func Continue[T any](pre error) func(f func() (T, error)) (T, error) {
 	return func(f func() (T, error)) (T, error) {
 		v, err := f()

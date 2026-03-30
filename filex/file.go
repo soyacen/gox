@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bufio"
 	"context"
+	"fmt"
 	"io"
 	"io/fs"
 	"iter"
@@ -15,15 +16,13 @@ import (
 	"github.com/soyacen/gox/stringx"
 )
 
-// Lines 将文件按行分割并返回一个迭代器序列，每次迭代返回一行字节切片
+// Lines splits a file into lines and returns an iterator sequence, yielding one line per iteration.
 //
-// 参数:
+// Parameters:
+//   - file: The file object to read
 //
-//	file - 需要读取的文件对象指针
-//
-// 返回值:
-//
-//	iter.Seq[[]byte] - 返回一个字节切片的迭代器序列，每个元素代表文件中的一行
+// Returns:
+//   - iter.Seq[[]byte]: An iterator sequence where each element is a line as a byte slice
 func Lines(file *os.File) iter.Seq[[]byte] {
 	return func(yield func([]byte) bool) {
 		scanner := bufio.NewScanner(file)
@@ -44,7 +43,14 @@ func Primary(path string) string {
 	return strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
 }
 
-// List is used to list the paths of all regular files under the specified root directory.
+// List lists the paths of all regular files under the specified root directory.
+//
+// Parameters:
+//   - root: The root directory to walk through
+//
+// Returns:
+//   - []string: List of file paths
+//   - error: Error encountered during directory walk
 func List(root string) ([]string, error) {
 	var files []string
 	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
@@ -64,41 +70,56 @@ func Extension(path string) string {
 	return strings.TrimPrefix(filepath.Ext(path), ".")
 }
 
-// Download 下载文件到指定路径
-// 参数：
-// url: 要下载的文件的URL
-// filepath: 保存文件的本地路径
-func Download(ctx context.Context, url, filepath string) error {
-	// 创建请求
+var DownloadClient = &http.Client{}
+
+func DownloadToReader(ctx context.Context, url string) (io.ReadCloser, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	// 发起GET请求
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := DownloadClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		_ = resp.Body.Close()
+		return nil, fmt.Errorf("unexpected status: %s", resp.Status)
+	}
+
+	return resp.Body, nil
+}
+
+func DownloadToData(ctx context.Context, url string) ([]byte, error) {
+	reader, err := DownloadToReader(ctx, url)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = reader.Close() }()
+	return io.ReadAll(reader)
+}
+
+func DownloadToFile(ctx context.Context, url, filepath string) error {
+	reader, err := DownloadToReader(ctx, url)
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = reader.Close() }()
 
-	// 创建文件
 	out, err := os.Create(filepath)
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer func() { _ = out.Close() }()
 
-	// 写入文件
-	_, err = io.Copy(out, resp.Body)
-	if err != nil {
+	if _, err = io.Copy(out, reader); err != nil {
 		return err
 	}
 
-	// 写盘
 	if err = out.Sync(); err != nil {
 		return err
 	}
+
 	return nil
 }
 

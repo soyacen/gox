@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+// ClientBuilder is a builder for creating custom http.Client instances.
+// It allows configuring transport, redirect handling, cookies, and timeout settings.
 type ClientBuilder struct {
 	transport     http.RoundTripper
 	checkRedirect func(req *http.Request, via []*http.Request) error
@@ -12,26 +14,58 @@ type ClientBuilder struct {
 	timeout       time.Duration
 }
 
+// Transport sets the HTTP transport for the client.
+//
+// Parameters:
+//   - transport: The RoundTripper to use for HTTP requests
+//
+// Returns:
+//   - *ClientBuilder: The builder instance for method chaining
 func (builder *ClientBuilder) Transport(transport http.RoundTripper) *ClientBuilder {
 	builder.transport = transport
 	return builder
 }
 
+// CheckRedirect sets the redirect policy function for the client.
+//
+// Parameters:
+//   - f: Function that determines whether to follow redirects
+//
+// Returns:
+//   - *ClientBuilder: The builder instance for method chaining
 func (builder *ClientBuilder) CheckRedirect(f func(req *http.Request, via []*http.Request) error) *ClientBuilder {
 	builder.checkRedirect = f
 	return builder
 }
 
+// Jar sets the cookie jar for the client.
+//
+// Parameters:
+//   - jar: The CookieJar to use for storing cookies
+//
+// Returns:
+//   - *ClientBuilder: The builder instance for method chaining
 func (builder *ClientBuilder) Jar(jar http.CookieJar) *ClientBuilder {
 	builder.jar = jar
 	return builder
 }
 
+// Timeout sets the request timeout for the client.
+//
+// Parameters:
+//   - timeout: The maximum time to wait for a request to complete
+//
+// Returns:
+//   - *ClientBuilder: The builder instance for method chaining
 func (builder *ClientBuilder) Timeout(timeout time.Duration) *ClientBuilder {
 	builder.timeout = timeout
 	return builder
 }
 
+// Build creates and returns a new http.Client with the configured settings.
+//
+// Returns:
+//   - *http.Client: A new HTTP client instance
 func (builder *ClientBuilder) Build() *http.Client {
 	return &http.Client{
 		Transport:     builder.transport,
