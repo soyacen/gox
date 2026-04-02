@@ -1,17 +1,17 @@
 module github.com/soyacen/gox
 
-go 1.23.0
+go 1.25.0
 
 require (
-	github.com/petermattis/goid v0.0.0-20260113132338-7c7de50cc741
+	github.com/petermattis/goid v0.0.0-20260330135022-df67b199bc81
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/crypto v0.47.0
-	golang.org/x/exp v0.0.0-20260112195511-716be5621a96
-	golang.org/x/image v0.35.0
-	golang.org/x/sync v0.19.0
-	golang.org/x/text v0.33.0
-	golang.org/x/tools v0.41.0
-	google.golang.org/genproto v0.0.0-20260128011058-8636f8732409
+	golang.org/x/crypto v0.49.0
+	golang.org/x/exp v0.0.0-20260312153236-7ab1446f8b90
+	golang.org/x/image v0.38.0
+	golang.org/x/sync v0.20.0
+	golang.org/x/text v0.35.0
+	golang.org/x/tools v0.43.0
+	google.golang.org/genproto v0.0.0-20260401024825-9d38bb4040a9
 	google.golang.org/protobuf v1.36.11
 )
 
