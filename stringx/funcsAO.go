@@ -9,8 +9,7 @@ import (
 	"strings"
 )
 
-// Verbose flag enables console output for those functions that have
-// counterparts in Go's excellent stadard packages.
+// Verbose enables console output for functions that have counterparts in Go's standard packages.
 var (
 	Verbose       = false
 	templateOpen  = "{{"
@@ -30,7 +29,7 @@ var (
 	notDigitsRe       = regexp.MustCompile(`[^0-9]`)
 	slugifyRe         = regexp.MustCompile(`[^\w\s\-]`)
 	spaceUnderscoreRe = regexp.MustCompile("[_\\s]+")
-	spacesRe          = regexp.MustCompile("[\\s\\xA0]+")
+	spacesRe          = regexp.MustCompile("[\\s\xA0]+")
 	stripPuncRe       = regexp.MustCompile(`[^\w\s]|_`)
 	templateRe        = regexp.MustCompile(`([\-\[\]()*\s])`)
 	templateRe2       = regexp.MustCompile(`\$`)
@@ -39,6 +38,14 @@ var (
 )
 
 // Between extracts a string between left and right strings.
+//
+// Parameters:
+//   - s: the source string.
+//   - left: the left delimiter.
+//   - right: the right delimiter.
+//
+// Returns:
+//   - string: the substring between left and right.
 func Between(s, left, right string) string {
 	l := len(left)
 	startPos := strings.Index(s, left)
@@ -46,7 +53,6 @@ func Between(s, left, right string) string {
 		return ""
 	}
 	endPos := IndexOf(s, right, startPos+l)
-	// log.Printf("%s: left %s right %s start %d end %d", s, left, right, startPos+l, endPos)
 	if endPos < 0 {
 		return ""
 	} else if right == "" {
@@ -57,13 +63,26 @@ func Between(s, left, right string) string {
 }
 
 // BetweenF is the filter form for Between.
+//
+// Parameters:
+//   - left: the left delimiter.
+//   - right: the right delimiter.
+//
+// Returns:
+//   - func(string) string: a function that extracts the substring.
 func BetweenF(left, right string) func(string) string {
 	return func(s string) string {
 		return Between(s, left, right)
 	}
 }
 
-// Camelize return new string which removes any underscores or dashes and convert a string into camel casing.
+// Camelize returns a new string which removes any underscores or dashes and converts a string into camel casing.
+//
+// Parameters:
+//   - s: the string to camelize.
+//
+// Returns:
+//   - string: the camelized string.
 func Camelize(s string) string {
 	return camelizeRe.ReplaceAllStringFunc(s, func(val string) string {
 		val = strings.ToUpper(val)
@@ -73,11 +92,24 @@ func Camelize(s string) string {
 }
 
 // Capitalize uppercases the first char of s and lowercases the rest.
+//
+// Parameters:
+//   - s: the string to capitalize.
+//
+// Returns:
+//   - string: the capitalized string.
 func Capitalize(s string) string {
 	return strings.ToUpper(s[0:1]) + strings.ToLower(s[1:])
 }
 
 // CharAt returns a string from the character at the specified position.
+//
+// Parameters:
+//   - s: the source string.
+//   - index: the position.
+//
+// Returns:
+//   - string: the character at the specified position.
 func CharAt(s string, index int) string {
 	l := len(s)
 	shortcut := index < 0 || index > l-1 || l == 0
@@ -88,6 +120,12 @@ func CharAt(s string, index int) string {
 }
 
 // CharAtF is the filter form of CharAt.
+//
+// Parameters:
+//   - index: the position.
+//
+// Returns:
+//   - func(string) string: a function that returns the character at the specified position.
 func CharAtF(index int) func(string) string {
 	return func(s string) string {
 		return CharAt(s, index)
@@ -95,6 +133,13 @@ func CharAtF(index int) func(string) string {
 }
 
 // ChompLeft removes prefix at the start of a string.
+//
+// Parameters:
+//   - s: the source string.
+//   - prefix: the prefix to remove.
+//
+// Returns:
+//   - string: the string with the prefix removed.
 func ChompLeft(s, prefix string) string {
 	if strings.HasPrefix(s, prefix) {
 		return s[len(prefix):]
@@ -103,6 +148,12 @@ func ChompLeft(s, prefix string) string {
 }
 
 // ChompLeftF is the filter form of ChompLeft.
+//
+// Parameters:
+//   - prefix: the prefix to remove.
+//
+// Returns:
+//   - func(string) string: a function that removes the prefix.
 func ChompLeftF(prefix string) func(string) string {
 	return func(s string) string {
 		return ChompLeft(s, prefix)
@@ -110,6 +161,13 @@ func ChompLeftF(prefix string) func(string) string {
 }
 
 // ChompRight removes suffix from end of s.
+//
+// Parameters:
+//   - s: the source string.
+//   - suffix: the suffix to remove.
+//
+// Returns:
+//   - string: the string with the suffix removed.
 func ChompRight(s, suffix string) string {
 	if strings.HasSuffix(s, suffix) {
 		return s[:len(s)-len(suffix)]
@@ -118,6 +176,12 @@ func ChompRight(s, suffix string) string {
 }
 
 // ChompRightF is the filter form of ChompRight.
+//
+// Parameters:
+//   - suffix: the suffix to remove.
+//
+// Returns:
+//   - func(string) string: a function that removes the suffix.
 func ChompRightF(suffix string) func(string) string {
 	return func(s string) string {
 		return ChompRight(s, suffix)
@@ -125,11 +189,23 @@ func ChompRightF(suffix string) func(string) string {
 }
 
 // Classify returns a camelized string with the first letter upper cased.
+//
+// Parameters:
+//   - s: the string to classify.
+//
+// Returns:
+//   - string: the classified string.
 func Classify(s string) string {
 	return Camelize("-" + s)
 }
 
 // ClassifyF is the filter form of Classify.
+//
+// Parameters:
+//   - s: the string to classify.
+//
+// Returns:
+//   - func(string) string: a function that classifies the string.
 func ClassifyF(s string) func(string) string {
 	return func(s string) string {
 		return Classify(s)
@@ -137,13 +213,25 @@ func ClassifyF(s string) func(string) string {
 }
 
 // Clean compresses all adjacent whitespace to a single space and trims s.
+//
+// Parameters:
+//   - s: the string to clean.
+//
+// Returns:
+//   - string: the cleaned string.
 func Clean(s string) string {
 	s = spacesRe.ReplaceAllString(s, " ")
 	s = beginEndSpacesRe.ReplaceAllString(s, "")
 	return s
 }
 
-// Dasherize  converts a camel cased string into a string delimited by dashes.
+// Dasherize converts a camel cased string into a string delimited by dashes.
+//
+// Parameters:
+//   - s: the string to dasherize.
+//
+// Returns:
+//   - string: the dasherized string.
 func Dasherize(s string) string {
 	s = strings.TrimSpace(s)
 	s = spaceUnderscoreRe.ReplaceAllString(s, "-")
@@ -153,7 +241,13 @@ func Dasherize(s string) string {
 	return s
 }
 
-// EscapeHTML is alias for html.EscapeString.
+// EscapeHTML is an alias for html.EscapeString.
+//
+// Parameters:
+//   - s: the string to escape.
+//
+// Returns:
+//   - string: the escaped string.
 func EscapeHTML(s string) string {
 	if Verbose {
 		fmt.Println("Use html.EscapeString instead of EscapeHTML")
@@ -162,7 +256,13 @@ func EscapeHTML(s string) string {
 }
 
 // DecodeHTMLEntities decodes HTML entities into their proper string representation.
-// DecodeHTMLEntities is an alias for html.UnescapeString
+// DecodeHTMLEntities is an alias for html.UnescapeString.
+//
+// Parameters:
+//   - s: the string to decode.
+//
+// Returns:
+//   - string: the decoded string.
 func DecodeHTMLEntities(s string) string {
 	if Verbose {
 		fmt.Println("Use html.UnescapeString instead of DecodeHTMLEntities")
@@ -171,6 +271,13 @@ func DecodeHTMLEntities(s string) string {
 }
 
 // EnsurePrefix ensures s starts with prefix.
+//
+// Parameters:
+//   - s: the source string.
+//   - prefix: the prefix to ensure.
+//
+// Returns:
+//   - string: the string with the prefix.
 func EnsurePrefix(s, prefix string) string {
 	if strings.HasPrefix(s, prefix) {
 		return s
@@ -179,6 +286,12 @@ func EnsurePrefix(s, prefix string) string {
 }
 
 // EnsurePrefixF is the filter form of EnsurePrefix.
+//
+// Parameters:
+//   - prefix: the prefix to ensure.
+//
+// Returns:
+//   - func(string) string: a function that ensures the prefix.
 func EnsurePrefixF(prefix string) func(string) string {
 	return func(s string) string {
 		return EnsurePrefix(s, prefix)
@@ -186,6 +299,13 @@ func EnsurePrefixF(prefix string) func(string) string {
 }
 
 // EnsureSuffix ensures s ends with suffix.
+//
+// Parameters:
+//   - s: the source string.
+//   - suffix: the suffix to ensure.
+//
+// Returns:
+//   - string: the string with the suffix.
 func EnsureSuffix(s, suffix string) string {
 	if strings.HasSuffix(s, suffix) {
 		return s
@@ -194,6 +314,12 @@ func EnsureSuffix(s, suffix string) string {
 }
 
 // EnsureSuffixF is the filter form of EnsureSuffix.
+//
+// Parameters:
+//   - suffix: the suffix to ensure.
+//
+// Returns:
+//   - func(string) string: a function that ensures the suffix.
 func EnsureSuffixF(suffix string) func(string) string {
 	return func(s string) string {
 		return EnsureSuffix(s, suffix)
@@ -201,6 +327,12 @@ func EnsureSuffixF(suffix string) func(string) string {
 }
 
 // Humanize transforms s into a human friendly form.
+//
+// Parameters:
+//   - s: the string to humanize.
+//
+// Returns:
+//   - string: the humanized string.
 func Humanize(s string) string {
 	if s == "" {
 		return s
@@ -215,6 +347,14 @@ func Humanize(s string) string {
 }
 
 // Iif is short for immediate if. If condition is true return truthy else falsey.
+//
+// Parameters:
+//   - condition: the condition.
+//   - truthy: the value to return if condition is true.
+//   - falsey: the value to return if condition is false.
+//
+// Returns:
+//   - string: truthy or falsey.
 func Iif(condition bool, truthy string, falsey string) string {
 	if condition {
 		return truthy
@@ -223,6 +363,14 @@ func Iif(condition bool, truthy string, falsey string) string {
 }
 
 // IndexOf finds the index of needle in s starting from start.
+//
+// Parameters:
+//   - s: the source string.
+//   - needle: the substring to find.
+//   - start: the starting index.
+//
+// Returns:
+//   - int: the index of needle, or -1 if not found.
 func IndexOf(s string, needle string, start int) int {
 	l := len(s)
 	if needle == "" {
@@ -245,32 +393,68 @@ func IndexOf(s string, needle string, start int) int {
 }
 
 // IsAlpha returns true if a string contains only letters from ASCII (a-z,A-Z). Other letters from other languages are not supported.
+//
+// Parameters:
+//   - s: the string to check.
+//
+// Returns:
+//   - bool: true if the string is alphabetic.
 func IsAlpha(s string) bool {
 	return !isAlphaRe.MatchString(strings.ToLower(s))
 }
 
 // IsAlphaNumeric returns true if a string contains letters and digits.
+//
+// Parameters:
+//   - s: the string to check.
+//
+// Returns:
+//   - bool: true if the string is alphanumeric.
 func IsAlphaNumeric(s string) bool {
 	return !isAlphaNumericRe.MatchString(strings.ToLower(s))
 }
 
-// IsLower returns true if s comprised of all lower case characters.
+// IsLower returns true if s is comprised of all lower case characters.
+//
+// Parameters:
+//   - s: the string to check.
+//
+// Returns:
+//   - bool: true if the string is all lowercase.
 func IsLower(s string) bool {
 	return IsAlpha(s) && s == strings.ToLower(s)
 }
 
 // IsNumeric returns true if a string contains only digits from 0-9. Other digits not in Latin (such as Arabic) are not currently supported.
+//
+// Parameters:
+//   - s: the string to check.
+//
+// Returns:
+//   - bool: true if the string is numeric.
 func IsNumeric(s string) bool {
 	return !notDigitsRe.MatchString(s)
 }
 
-// IsUpper returns true if s contains all upper case chracters.
+// IsUpper returns true if s contains all upper case characters.
+//
+// Parameters:
+//   - s: the string to check.
+//
+// Returns:
+//   - bool: true if the string is all uppercase.
 func IsUpper(s string) bool {
 	return IsAlpha(s) && s == strings.ToUpper(s)
 }
 
-
 // Left returns the left substring of length n.
+//
+// Parameters:
+//   - s: the source string.
+//   - n: the length.
+//
+// Returns:
+//   - string: the left substring.
 func Left(s string, n int) string {
 	if n < 0 {
 		return Right(s, -n)
@@ -279,6 +463,12 @@ func Left(s string, n int) string {
 }
 
 // LeftF is the filter form of Left.
+//
+// Parameters:
+//   - n: the length.
+//
+// Returns:
+//   - func(string) string: a function that returns the left substring.
 func LeftF(n int) func(string) string {
 	return func(s string) string {
 		return Left(s, n)
@@ -286,11 +476,24 @@ func LeftF(n int) func(string) string {
 }
 
 // LeftOf returns the substring left of needle.
+//
+// Parameters:
+//   - s: the source string.
+//   - needle: the delimiter.
+//
+// Returns:
+//   - string: the substring left of needle.
 func LeftOf(s string, needle string) string {
 	return Between(s, "", needle)
 }
 
 // Letters returns an array of runes as strings so it can be indexed into.
+//
+// Parameters:
+//   - s: the source string.
+//
+// Returns:
+//   - []string: an array of runes as strings.
 func Letters(s string) []string {
 	result := []string{}
 	for _, r := range s {
@@ -299,13 +502,26 @@ func Letters(s string) []string {
 	return result
 }
 
-// Lines convert windows newlines to unix newlines then convert to an Array of lines.
+// Lines converts windows newlines to unix newlines then converts to an array of lines.
+//
+// Parameters:
+//   - s: the source string.
+//
+// Returns:
+//   - []string: an array of lines.
 func Lines(s string) []string {
 	s = strings.Replace(s, "\r\n", "\n", -1)
 	return strings.Split(s, "\n")
 }
 
-// Map maps an array's iitem through an iterator.
+// Map maps an array's items through an iterator.
+//
+// Parameters:
+//   - arr: the array to map.
+//   - iterator: the mapping function.
+//
+// Returns:
+//   - []string: the mapped array.
 func Map(arr []string, iterator func(string) string) []string {
 	r := []string{}
 	for _, item := range arr {
@@ -313,4 +529,3 @@ func Map(arr []string, iterator func(string) string) []string {
 	}
 	return r
 }
-

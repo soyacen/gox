@@ -1,10 +1,9 @@
 package ringx
 
-// defaultRingSize defines the default ring size if not specified
+// defaultRingSize defines the default ring size if not specified.
 const defaultRingSize = 16
 
-// RingGrowingOptions sets parameters for [RingGrowing] and
-// [TypedRingGrowing].
+// RingGrowingOptions sets parameters for RingGrowing and TypedRingGrowing.
 type RingGrowingOptions struct {
 	// InitialSize is the number of pre-allocated elements in the
 	// initial underlying storage buffer.
@@ -13,7 +12,7 @@ type RingGrowingOptions struct {
 
 // TypedRingGrowing is a growing ring buffer.
 // The zero value has an initial size of 0 and is ready to use.
-// Not thread safe.
+// Not thread-safe.
 type TypedRingGrowing[T any] struct {
 	data     []T
 	n        int // Size of Data
@@ -21,7 +20,13 @@ type TypedRingGrowing[T any] struct {
 	readable int // Number of data items available
 }
 
-// NewTypedRingGrowing constructs a new TypedRingGrowing instance with provided parameters.
+// NewTypedRingGrowing constructs a new TypedRingGrowing instance with provided options.
+//
+// Parameters:
+//   - opts: The options for the ring buffer
+//
+// Returns:
+//   - *TypedRingGrowing[T]: A new TypedRingGrowing instance
 func NewTypedRingGrowing[T any](opts RingGrowingOptions) *TypedRingGrowing[T] {
 	return &TypedRingGrowing[T]{
 		data: make([]T, opts.InitialSize),
@@ -29,7 +34,11 @@ func NewTypedRingGrowing[T any](opts RingGrowingOptions) *TypedRingGrowing[T] {
 	}
 }
 
-// ReadOne reads (consumes) first item from the buffer if it is available, otherwise returns false.
+// ReadOne reads (consumes) the first item from the buffer if it is available.
+//
+// Returns:
+//   - T: The read item (zero value if not available)
+//   - bool: True if an item was available, false otherwise
 func (r *TypedRingGrowing[T]) ReadOne() (data T, ok bool) {
 	if r.readable == 0 {
 		return
@@ -48,6 +57,9 @@ func (r *TypedRingGrowing[T]) ReadOne() (data T, ok bool) {
 }
 
 // WriteOne adds an item to the end of the buffer, growing it if it is full.
+//
+// Parameters:
+//   - data: The item to add
 func (r *TypedRingGrowing[T]) WriteOne(data T) {
 	if r.readable == r.n {
 		// Time to grow
@@ -72,16 +84,22 @@ func (r *TypedRingGrowing[T]) WriteOne(data T) {
 }
 
 // Len returns the number of items in the buffer.
+//
+// Returns:
+//   - int: The number of items
 func (r *TypedRingGrowing[T]) Len() int {
 	return r.readable
 }
 
 // Cap returns the capacity of the buffer.
+//
+// Returns:
+//   - int: The capacity
 func (r *TypedRingGrowing[T]) Cap() int {
 	return r.n
 }
 
-// RingOptions sets parameters for [Ring].
+// RingOptions sets parameters for Ring.
 type RingOptions struct {
 	// InitialSize is the number of pre-allocated elements in the
 	// initial underlying storage buffer.
@@ -92,15 +110,21 @@ type RingOptions struct {
 	NormalSize int
 }
 
-// Ring is a dynamically-sized ring buffer which can grow and shrink as-needed.
+// Ring is a dynamically-sized ring buffer which can grow and shrink as needed.
 // The zero value has an initial size and normal size of 0 and is ready to use.
-// Not thread safe.
+// Not thread-safe.
 type Ring[T any] struct {
 	growing    TypedRingGrowing[T]
 	normalSize int // Limits the size of the buffer that is kept for reuse. Read-only.
 }
 
-// NewRing constructs a new Ring instance with provided parameters.
+// NewRing constructs a new Ring instance with provided options.
+//
+// Parameters:
+//   - opts: The options for the ring buffer
+//
+// Returns:
+//   - *Ring[T]: A new Ring instance
 func NewRing[T any](opts RingOptions) *Ring[T] {
 	return &Ring[T]{
 		growing:    *NewTypedRingGrowing[T](RingGrowingOptions{InitialSize: opts.InitialSize}),
@@ -108,9 +132,12 @@ func NewRing[T any](opts RingOptions) *Ring[T] {
 	}
 }
 
-// ReadOne reads (consumes) first item from the buffer if it is available,
-// otherwise returns false. When the buffer has been totally consumed and has
-// grown in size beyond its normal size, it shrinks down to its normal size again.
+// ReadOne reads (consumes) the first item from the buffer if it is available.
+// When the buffer has been totally consumed and has grown beyond its normal size, it shrinks.
+//
+// Returns:
+//   - T: The read item (zero value if not available)
+//   - bool: True if an item was available, false otherwise
 func (r *Ring[T]) ReadOne() (data T, ok bool) {
 	element, ok := r.growing.ReadOne()
 
@@ -126,16 +153,25 @@ func (r *Ring[T]) ReadOne() (data T, ok bool) {
 }
 
 // WriteOne adds an item to the end of the buffer, growing it if it is full.
+//
+// Parameters:
+//   - data: The item to add
 func (r *Ring[T]) WriteOne(data T) {
 	r.growing.WriteOne(data)
 }
 
 // Len returns the number of items in the buffer.
+//
+// Returns:
+//   - int: The number of items
 func (r *Ring[T]) Len() int {
 	return r.growing.Len()
 }
 
 // Cap returns the capacity of the buffer.
+//
+// Returns:
+//   - int: The capacity
 func (r *Ring[T]) Cap() int {
 	return r.growing.Cap()
 }

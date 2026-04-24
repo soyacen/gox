@@ -20,13 +20,29 @@ func init() {
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 }
 
-// All 将多个输入通道合并为一个输出通道，然后返回一个包含所有输入通道当前值的切片的通道
+// All merges multiple input channels into a single output channel, then returns a channel
+// containing a slice of all current values from the input channels.
 // See: [Go Concurrency Patterns: Timing out, moving on](https://go.dev/blog/concurrency-timeouts)
+//
+// Parameters:
+//   - ctx: context for cancellation
+//   - ins: input channels to merge
+//
+// Returns:
+//   - <-chan []T: channel containing a slice of all values
 func All[T any](ctx context.Context, ins ...<-chan T) <-chan []T {
 	return AsSlice(ctx, FanIn(ctx, ins...))
 }
 
-// Any 从多个输入通道中任意选择一个值，返回一个包含此值的一个通道，
+// Any selects any one value from multiple input channels and returns a channel
+// containing that value.
+//
+// Parameters:
+//   - ctx: context for cancellation
+//   - ins: input channels to select from
+//
+// Returns:
+//   - <-chan T: channel containing the selected value
 func Any[T any](ctx context.Context, ins ...<-chan T) <-chan T {
 	out := make(chan T, 1)
 	go _any(ctx, out, ins...)
@@ -78,7 +94,14 @@ func removeAt[S ~[]E, E any](array S, is ...int) S {
 	})
 }
 
-// TrySend 用于尝试将值发送到指定的通道。
+// TrySend attempts to send a value to the specified channel.
+//
+// Parameters:
+//   - in: channel to send to
+//   - v: value to send
+//
+// Returns:
+//   - error: nil on success, ErrDefaultBranch if channel is full
 func TrySend[T any](in chan<- T, v T) error {
 	select {
 	case in <- v:
@@ -88,7 +111,14 @@ func TrySend[T any](in chan<- T, v T) error {
 	}
 }
 
-// TryReceive 用于尝试从通道接收数据。
+// TryReceive attempts to receive data from a channel.
+//
+// Parameters:
+//   - in: channel to receive from
+//
+// Returns:
+//   - T: received value
+//   - error: nil on success, ErrDefaultBranch if no value available
 func TryReceive[T any](in <-chan T) (T, error) {
 	var v T
 	select {
@@ -99,7 +129,15 @@ func TryReceive[T any](in <-chan T) (T, error) {
 	}
 }
 
-// Emit 创建一个通道，异步发送传入的值，并允许通过上下文取消发送过程。
+// Emit creates a channel that asynchronously sends the provided values,
+// allowing cancellation via context.
+//
+// Parameters:
+//   - ctx: context for cancellation
+//   - values: values to emit
+//
+// Returns:
+//   - <-chan T: channel receiving the emitted values
 func Emit[T any](ctx context.Context, values ...T) <-chan T {
 	out := make(chan T)
 	go func() {
@@ -115,6 +153,13 @@ func Emit[T any](ctx context.Context, values ...T) <-chan T {
 	return out
 }
 
+// Once creates a channel containing a single value.
+//
+// Parameters:
+//   - m: value to send
+//
+// Returns:
+//   - <-chan M: channel with a single value
 func Once[M any](m M) <-chan M {
 	ch := make(chan M, 1)
 	ch <- m
@@ -122,16 +167,36 @@ func Once[M any](m M) <-chan M {
 	return ch
 }
 
+// Nothing creates and immediately closes a channel.
+//
+// Returns:
+//   - <-chan M: closed channel
 func Nothing[M any]() <-chan M {
 	ch := make(chan M)
 	close(ch)
 	return ch
 }
 
+// Append appends channels to a slice of channels.
+//
+// Parameters:
+//   - c: base slice
+//   - channels: channels to append
+//
+// Returns:
+//   - []chan T: appended slice
 func Append[T any](c []chan T, channels ...chan T) []chan T {
 	return Append(c, channels...)
 }
 
+// AppendSendChannel appends send channels to a slice of send channels.
+//
+// Parameters:
+//   - c: base slice
+//   - channels: channels to append
+//
+// Returns:
+//   - []<-chan T: appended slice
 func AppendSendChannel[T any](c []<-chan T, channels ...chan T) []<-chan T {
 	for _, ch := range channels {
 		c = append(c, ch)
@@ -139,6 +204,14 @@ func AppendSendChannel[T any](c []<-chan T, channels ...chan T) []<-chan T {
 	return c
 }
 
+// AppendReceiveChannel appends receive channels to a slice of receive channels.
+//
+// Parameters:
+//   - c: base slice
+//   - channels: channels to append
+//
+// Returns:
+//   - []chan<- T: appended slice
 func AppendReceiveChannel[T any](c []chan<- T, channels ...chan T) []chan<- T {
 	for _, ch := range channels {
 		c = append(c, ch)
@@ -146,6 +219,11 @@ func AppendReceiveChannel[T any](c []chan<- T, channels ...chan T) []chan<- T {
 	return c
 }
 
+// Copy copies values from src to dest and closes dest when done.
+//
+// Parameters:
+//   - dest: destination channel
+//   - src: source channel
 func Copy[T any](dest chan<- T, src <-chan T) {
 	for v := range src {
 		dest <- v
@@ -153,23 +231,44 @@ func Copy[T any](dest chan<- T, src <-chan T) {
 	close(dest)
 }
 
+// AsyncCopy copies values from src to dest asynchronously and closes dest when done.
+//
+// Parameters:
+//   - dest: destination channel
+//   - src: source channel
 func AsyncCopy[T any](dest chan<- T, src <-chan T) {
 	go func() { Copy[T](dest, src) }()
 }
 
 // Pipe copies values from src to dest.
-// Deprecated: Do not use. use Copy instead.
+// Deprecated: Do not use. Use Copy instead.
+//
+// Parameters:
+//   - src: source channel
+//   - dest: destination channel
 func Pipe[T any](src <-chan T, dest chan<- T) {
 	Copy[T](dest, src)
 }
 
 // AsyncPipe copies values from src to dest asynchronously.
-// Deprecated: Do not use. use AsyncCopy instead.
+// Deprecated: Do not use. Use AsyncCopy instead.
+//
+// Parameters:
+//   - src: source channel
+//   - dest: destination channel
 func AsyncPipe[T any](src <-chan T, dest chan<- T) {
 	AsyncCopy[T](dest, src)
 }
 
-// Skip 是一个泛型函数，用于从输入的通道in中跳过指定数量n的元素，并将剩余的元素传递到输出通道out中。
+// Skip skips the first n elements from the input channel and passes remaining elements to the output channel.
+//
+// Parameters:
+//   - ctx: context for cancellation
+//   - in: input channel
+//   - n: number of elements to skip
+//
+// Returns:
+//   - <-chan T: output channel with remaining elements
 func Skip[T any](ctx context.Context, in <-chan T, n int) <-chan T {
 	var out chan T
 	if in == nil {
@@ -203,10 +302,19 @@ func Skip[T any](ctx context.Context, in <-chan T, n int) <-chan T {
 	return out
 }
 
-// Pipeline 创建一个数据处理管道。
-// 它接收一个输入通道 in 和一个处理函数 f，返回一个输出通道 out。
-// 在新的goroutine中，遍历输入通道中的每个元素，应用处理函数后将结果发送到输出通道。
-// 如果上下文 ctx 被取消，则提前退出并关闭输出通道。
+// Pipeline creates a data processing pipeline.
+// It receives an input channel in and a processing function f, returning an output channel out.
+// In a new goroutine, it iterates over each element in the input channel, applies the processing function,
+// and sends the result to the output channel.
+// If context ctx is cancelled, it exits early and closes the output channel.
+//
+// Parameters:
+//   - ctx: context for cancellation
+//   - in: input channel
+//   - f: processing function
+//
+// Returns:
+//   - <-chan R: output channel with processed elements
 func Pipeline[T any, R any](ctx context.Context, in <-chan T, f func(T) R) <-chan R {
 	out := make(chan R, len(in))
 	go func() {
@@ -230,7 +338,17 @@ func Pipeline[T any, R any](ctx context.Context, in <-chan T, f func(T) R) <-cha
 	return out
 }
 
-// Reduce 对输入channel中的元素执行归约操作，使用提供的累积函数和初始值，返回最终结果。
+// Reduce performs a reduction operation on elements from the input channel,
+// using the provided accumulator function and initial value, returning the final result.
+//
+// Parameters:
+//   - ctx: context for cancellation
+//   - in: input channel
+//   - identity: initial value
+//   - accumulator: reduction function
+//
+// Returns:
+//   - <-chan R: channel containing the reduced result
 func Reduce[T any, R any](ctx context.Context, in <-chan T, identity R, accumulator func(R, T) R) <-chan R {
 	return Pipeline[T, R](ctx, in, func(value T) R {
 		identity = accumulator(identity, value)
@@ -238,7 +356,15 @@ func Reduce[T any, R any](ctx context.Context, in <-chan T, identity R, accumula
 	})
 }
 
-// Max 用于从输入通道 in 中找到最大值，并通过输出通道 out 返回。
+// Max finds the maximum value from the input channel and returns it through the output channel.
+//
+// Parameters:
+//   - ctx: context for cancellation
+//   - in: input channel
+//   - cmp: comparison function
+//
+// Returns:
+//   - <-chan T: channel containing the maximum value
 func Max[T any](ctx context.Context, in <-chan T, cmp func(a, b T) int) <-chan T {
 	out := make(chan T, 1)
 	go func() {
@@ -273,7 +399,15 @@ func Max[T any](ctx context.Context, in <-chan T, cmp func(a, b T) int) <-chan T
 	return out
 }
 
-// Min 用于从输入通道 in 中找到最小值，并通过输出通道 out 返回。
+// Min finds the minimum value from the input channel and returns it through the output channel.
+//
+// Parameters:
+//   - ctx: context for cancellation
+//   - in: input channel
+//   - cmp: comparison function
+//
+// Returns:
+//   - <-chan T: channel containing the minimum value
 func Min[T any](ctx context.Context, in <-chan T, cmp func(a, b T) int) <-chan T {
 	out := make(chan T, 1)
 	go func() {
@@ -308,7 +442,16 @@ func Min[T any](ctx context.Context, in <-chan T, cmp func(a, b T) int) <-chan T
 	return out
 }
 
-// AllMatch 检查通道中所有元素是否满足给定条件，若全部满足则返回true，否则返回false。
+// AllMatch checks if all elements in the channel satisfy the given predicate.
+// Returns true if all match, false otherwise.
+//
+// Parameters:
+//   - ctx: context for cancellation
+//   - in: input channel
+//   - predicate: condition function
+//
+// Returns:
+//   - <-chan bool: channel containing the result
 func AllMatch[T any](ctx context.Context, in <-chan T, predicate func(value T) bool) <-chan bool {
 	var out chan bool
 	if in == nil {
@@ -336,7 +479,16 @@ func AllMatch[T any](ctx context.Context, in <-chan T, predicate func(value T) b
 	return out
 }
 
-// AnyMatch 检查通道中是否有元素满足给定条件，找到即返回 true，否则返回 false。
+// AnyMatch checks if any element in the channel satisfies the given predicate.
+// Returns true if any match is found, false otherwise.
+//
+// Parameters:
+//   - ctx: context for cancellation
+//   - in: input channel
+//   - predicate: condition function
+//
+// Returns:
+//   - <-chan bool: channel containing the result
 func AnyMatch[T any](ctx context.Context, in <-chan T, predicate func(value T) bool) <-chan bool {
 	var out chan bool
 	if in == nil {
@@ -364,7 +516,16 @@ func AnyMatch[T any](ctx context.Context, in <-chan T, predicate func(value T) b
 	return out
 }
 
-// NoneMatch 检查通道中的所有元素是否都不满足给定条件，若所有元素都不满足则返回true，否则返回false。
+// NoneMatch checks if no elements in the channel satisfy the given predicate.
+// Returns true if none match, false otherwise.
+//
+// Parameters:
+//   - ctx: context for cancellation
+//   - in: input channel
+//   - predicate: condition function
+//
+// Returns:
+//   - <-chan bool: channel containing the result
 func NoneMatch[T any](ctx context.Context, in <-chan T, predicate func(value T) bool) <-chan bool {
 	var out chan bool
 	if in == nil {
@@ -392,7 +553,8 @@ func NoneMatch[T any](ctx context.Context, in <-chan T, predicate func(value T) 
 	return out
 }
 
-// Map 函数接收一个输入通道和一个转换函数，将输入通道的每个元素通过转换函数处理后放入新通道，并返回此新通道。
+// Map receives an input channel and a transformation function, processes each element
+// through the transformation function and places it into a new channel, returning this new channel.
 func Map[T any, R any](in <-chan T, mapper func(T) R) <-chan R {
 	var out chan R
 	if in == nil {
@@ -406,8 +568,10 @@ func Map[T any, R any](in <-chan T, mapper func(T) R) <-chan R {
 	return out
 }
 
-// AsyncMap 函数AsyncMap接收数据通道和映射函数，异步处理通道中的每个元素，并通过另一个通道输出处理结果。
-// 当输入通道关闭或上下文取消时，处理停止。若输入通道为空，则直接返回空输出通道。
+// AsyncMap receives a data channel and a mapping function, asynchronously processes each element
+// in the channel and outputs the processed results through another channel.
+// Processing stops when the input channel is closed or context is cancelled.
+// If the input channel is nil, returns an empty output channel.
 func AsyncMap[T any, R any](ctx context.Context, in <-chan T, mapper func(T) R) <-chan R {
 	var out chan R
 	if in == nil {
@@ -431,10 +595,10 @@ func AsyncMap[T any, R any](ctx context.Context, in <-chan T, mapper func(T) R) 
 	return out
 }
 
-// Limit 接收泛型输入通道in和上下文ctx，以及整数maxSize作为参数。
-// 当从in读取数据时，向输出通道out发送数据项，直到maxSize达到0或in关闭。
-// 如果in为nil，则直接返回nil。
-// 支持通过ctx.Done()提前退出以取消操作。
+// Limit reads from the input channel and sends items to the output channel
+// until maxSize reaches 0 or the input channel is closed.
+// If in is nil, returns nil.
+// Supports early exit via ctx.Done() to cancel the operation.
 func Limit[T any](ctx context.Context, in <-chan T, maxSize int) <-chan T {
 	var out chan T
 	if in == nil {
@@ -468,7 +632,8 @@ func Limit[T any](ctx context.Context, in <-chan T, maxSize int) <-chan T {
 	return out
 }
 
-// AsyncGenerate 异步生成类型为T的值，并通过通道输出。它接收上下文和一个供应商函数，当上下文被取消时停止生成。
+// AsyncGenerate asynchronously generates values of type T and outputs them through a channel.
+// It receives a context and a supplier function, and stops generating when the context is cancelled.
 func AsyncGenerate[T any](ctx context.Context, supplier func(context.Context) T) <-chan T {
 	out := make(chan T)
 	go func() {
@@ -487,7 +652,9 @@ func AsyncGenerate[T any](ctx context.Context, supplier func(context.Context) T)
 	return out
 }
 
-// AsyncIterate 创建一个异步生成T类型值的channel，基于初始值和迭代函数不断产生新值，直至被上下文取消。
+// AsyncIterate creates a channel that asynchronously generates values of type T,
+// continuously producing new values based on an initial seed and iteration function
+// until the context is cancelled.
 func AsyncIterate[T any](ctx context.Context, seed T, f func(context.Context, T) T) <-chan T {
 	out := make(chan T)
 	go func(seed T) {
@@ -508,6 +675,14 @@ func AsyncIterate[T any](ctx context.Context, seed T, f func(context.Context, T)
 	return out
 }
 
+// Filter filters elements from the input channel based on a predicate function.
+//
+// Parameters:
+//   - in: input channel
+//   - predicate: filter function
+//
+// Returns:
+//   - <-chan T: filtered output channel
 func Filter[T any](in <-chan T, predicate func(value T) bool) <-chan T {
 	out := make(chan T)
 	go func() {
@@ -522,7 +697,7 @@ func Filter[T any](in <-chan T, predicate func(value T) bool) <-chan T {
 	return out
 }
 
-// FanIn 函数将多个输入通道的数据合并到一个输出通道中。
+// FanIn merges data from multiple input channels into a single output channel.
 // See: [concurrency](https://go.dev/talks/2012/concurrency.slide#28)
 func FanIn[T any](ctx context.Context, ins ...<-chan T) <-chan T {
 	out := make(chan T)
@@ -555,7 +730,7 @@ func FanIn[T any](ctx context.Context, ins ...<-chan T) <-chan T {
 	return out
 }
 
-// FanOut 函数将输入通道的数据分发到多个输出通道中。
+// FanOut distributes data from the input channel to multiple output channels.
 func FanOut[T any](ctx context.Context, in <-chan T, length int) []chan<- T {
 	outs := make([]chan<- T, length)
 	for i := range outs {
@@ -622,6 +797,14 @@ func _FanIn[T any](channels ...<-chan T) <-chan T {
 	return out
 }
 
+// Distinct filters out duplicate elements from the input channel.
+//
+// Parameters:
+//   - in: input channel
+//   - cmp: comparison function to determine duplicates
+//
+// Returns:
+//   - <-chan T: output channel with distinct elements
 func Distinct[T any](in <-chan T, cmp func(value, stored T) bool) <-chan T {
 	out := make(chan T, cap(in))
 	go func() {
@@ -639,16 +822,31 @@ func Distinct[T any](in <-chan T, cmp func(value, stored T) bool) <-chan T {
 	return out
 }
 
+// Discard discards all values from the channel until it is closed.
+//
+// Parameters:
+//   - c: channel to discard from
 func Discard[T any](c <-chan T) {
 	for range c {
 	}
 }
 
+// AsyncDiscard asynchronously discards all values from the channel until it is closed.
+//
+// Parameters:
+//   - c: channel to discard from
 func AsyncDiscard[T any](c <-chan T) {
 	go Discard(c)
 }
 
-// AsSlice 将一个通道中的所有元素收集并转换为切片返回。
+// AsSlice collects all elements from a channel and returns them as a slice.
+//
+// Parameters:
+//   - ctx: context for cancellation
+//   - in: input channel
+//
+// Returns:
+//   - <-chan []T: channel containing the collected slice
 func AsSlice[T any](ctx context.Context, in <-chan T) <-chan []T {
 	out := make(chan []T, 1)
 	go func() {

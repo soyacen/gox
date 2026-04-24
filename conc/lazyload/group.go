@@ -8,69 +8,82 @@ import (
 	"golang.org/x/sync/singleflight"
 )
 
-// ErrNilFunction 当 New 函数为 nil 时返回的错误
+// ErrNilFunction is returned when the New function is nil.
 var ErrNilFunction = errors.New("lazyload: New function is nil")
 
-// entry 包装了实际对象和其清理函数
+// entry wraps the actual object and its cleanup function.
 type entry[Obj any] struct {
-	Obj       Obj                                      // 实际存储的对象
-	CloseFunc func(ctx context.Context, obj Obj) error // 对象清理函数
+	Obj       Obj                                      // The actual stored object
+	CloseFunc func(ctx context.Context, obj Obj) error // Object cleanup function
 }
 
-// Group 实现了并发安全的懒加载缓存，确保相同键的值只创建一次
-// 支持自定义创建和清理函数
+// Group implements a concurrency-safe lazy-loading cache ensuring values are created only once per key.
+//
+// It supports custom creation and cleanup functions.
 type Group[Obj any] struct {
-	m        sync.Map                                 // 存储键值对，value 为 entry 类型
-	g        singleflight.Group                       // 并发控制，防止重复创建
-	New      func(key string) (Obj, error)            // 创建新值的函数
-	Finalize func(ctx context.Context, obj Obj) error // 清理资源的函数
+	m        sync.Map                                 // Stores key-value pairs where value is of type entry
+	g        singleflight.Group                       // Concurrency control to prevent duplicate creation
+	New      func(key string) (Obj, error)            // Function to create new values
+	Finalize func(ctx context.Context, obj Obj) error // Function to cleanup resources
 }
 
-// Option 允许自定义 LoadOrNew 的行为
+// Option allows customizing LoadOrNew behavior.
 type Option[Obj any] func(*options[Obj])
 
-// options 存储 LoadOrNew 的配置选项
+// options stores LoadOrNew configuration options.
 type options[Obj any] struct {
-	factory   func(key string) (Obj, error)            // 自定义创建函数
-	finalizer func(ctx context.Context, obj Obj) error // 自定义清理函数
+	factory   func(key string) (Obj, error)            // Custom creation function
+	finalizer func(ctx context.Context, obj Obj) error // Custom cleanup function
 }
 
-// WithFactory 指定自定义的对象创建函数
+// WithFactory specifies a custom object creation function.
 func WithFactory[Obj any](factory func(key string) (Obj, error)) Option[Obj] {
 	return func(opts *options[Obj]) {
 		opts.factory = factory
 	}
 }
 
-// WithFinalizer 指定自定义的对象清理函数
+// WithFinalizer specifies a custom object cleanup function.
 func WithFinalizer[Obj any](finalizer func(ctx context.Context, obj Obj) error) Option[Obj] {
 	return func(opts *options[Obj]) {
 		opts.finalizer = finalizer
 	}
 }
 
-// Load 获取键对应的值，不存在时使用默认的 New 函数创建
-// 返回值、错误和是否存在标志
+// Load gets the value for the given key, creating it using the default New function if it doesn't exist.
+//
+// Returns:
+//   - Obj: the value
+//   - error: any error encountered
+//   - bool: true if the value already existed, false if it was newly created
 func (g *Group[Obj]) Load(key string) (Obj, error, bool) {
 	return g.LoadOrNew(key)
 }
 
-// LoadOrNew 加载现有值或使用指定选项创建新值
-// 返回值、错误和是否存在标志(true=已存在, false=新创建)
+// LoadOrNew loads an existing value or creates a new one using the specified options.
+//
+// Parameters:
+//   - key: the key to look up
+//   - opts: optional configuration options
+//
+// Returns:
+//   - Obj: the value
+//   - error: any error encountered
+//   - bool: true if the value already existed, false if it was newly created
 func (g *Group[Obj]) LoadOrNew(key string, opts ...Option[Obj]) (Obj, error, bool) {
-	// 快速路径：如果值已存在，直接返回
+	// Fast path: if value already exists, return it directly
 	if value, ok := g.m.Load(key); ok {
 		entry := value.(*entry[Obj])
 		return entry.Obj, nil, true
 	}
 
-	// 应用选项
+	// Apply options
 	opt := &options[Obj]{}
 	for _, o := range opts {
 		o(opt)
 	}
 
-	// 确定创建函数
+	// Determine creation function
 	factory := opt.factory
 	if factory == nil {
 		factory = g.New
@@ -80,9 +93,9 @@ func (g *Group[Obj]) LoadOrNew(key string, opts ...Option[Obj]) (Obj, error, boo
 		return obj, ErrNilFunction, false
 	}
 
-	// 使用 singleflight 防止重复创建
+	// Use singleflight to prevent duplicate creation
 	value, err, _ := g.g.Do(key, func() (any, error) {
-		// 再次检查，防止在等待期间被其他 goroutine 创建
+		// Double-check to prevent creation by other goroutines during waiting
 		if value, ok := g.m.Load(key); ok {
 			return value, nil
 		}
@@ -91,7 +104,7 @@ func (g *Group[Obj]) LoadOrNew(key string, opts ...Option[Obj]) (Obj, error, boo
 			return nil, err
 		}
 
-		// 使用适当的清理函数存储值
+		// Store value with appropriate cleanup function
 		finalizer := g.Finalize
 		if opt.finalizer != nil {
 			finalizer = opt.finalizer
@@ -111,11 +124,13 @@ func (g *Group[Obj]) LoadOrNew(key string, opts ...Option[Obj]) (Obj, error, boo
 	return obj, nil, false
 }
 
-// Close 清理所有缓存项并释放资源
-// 返回所有清理错误的组合
+// Close cleans up all cached items and releases resources.
+//
+// Returns:
+//   - error: a combination of all cleanup errors
 func (g *Group[Obj]) Close(ctx context.Context) error {
 	var errs []error
-	// 遍历并清理所有缓存项
+	// Iterate and cleanup all cached items
 	g.m.Range(func(key, value any) bool {
 		g.m.Delete(key.(string))
 		entry := value.(*entry[Obj])

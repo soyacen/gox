@@ -30,10 +30,26 @@ func (w *errWriter) Write(b []byte) (int, error) {
 	return n, w.err
 }
 
+// ErrReader wraps an io.Reader to capture the first error.
+// After the first error occurs, all subsequent Read calls return that error.
+//
+// Parameters:
+//   - r: the underlying io.Reader
+//
+// Returns:
+//   - io.Reader: a reader that captures the first error
 func ErrReader(r io.Reader) io.Reader {
 	return &errReader{r: r}
 }
 
+// ErrWriter wraps an io.Writer to capture the first error.
+// After the first error occurs, all subsequent Write calls return that error.
+//
+// Parameters:
+//   - w: the underlying io.Writer
+//
+// Returns:
+//   - io.Writer: a writer that captures the first error
 func ErrWriter(w io.Writer) io.Writer {
 	return &errWriter{w: w}
 }

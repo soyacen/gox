@@ -6,16 +6,21 @@ import (
 	"math/bits"
 )
 
-// ErrInvalidSize is returned when the maximum size is less than the minimum size in NewBucketBufferPool
+// ErrInvalidSize is returned when the maximum size is less than the minimum size in NewBucketBufferPool.
 var ErrInvalidSize = errors.New("poolx: maxSize can't be less than minSize")
 
-// BufferPool is a type alias for Pool[*bytes.Buffer], representing a pool of bytes.Buffer objects
+// BufferPool is a type alias for Pool[*bytes.Buffer], representing a pool of bytes.Buffer objects.
 type BufferPool = Pool[*bytes.Buffer]
 
 // NewBufferPool creates a new BufferPool instance with the specified buffer size.
 // The pool creates new bytes.Buffer instances with the given size and resets them before returning to the pool.
-// size: the initial capacity of each bytes.Buffer in the pool
-// Returns a new BufferPool instance and an error if creation fails
+//
+// Parameters:
+//   - size: the initial capacity of each bytes.Buffer in the pool
+//
+// Returns:
+//   - *BufferPool: a new BufferPool instance
+//   - error: an error if creation fails
 func NewBufferPool(size int) (*BufferPool, error) {
 	return NewPool(
 		func() *bytes.Buffer {
@@ -27,7 +32,7 @@ func NewBufferPool(size int) (*BufferPool, error) {
 	)
 }
 
-// BucketBufferPool is the main structure for bucket-based memory pool.
+// BucketBufferPool is the main structure for a bucket-based memory pool.
 // It manages multiple buffer pools of different sizes to efficiently handle buffers of various capacities.
 type BucketBufferPool struct {
 	minSize int           // Minimum buffer size supported by this pool
@@ -38,9 +43,14 @@ type BucketBufferPool struct {
 // NewBucketBufferPool creates a new bucket-based memory pool with the specified size range.
 // It creates a series of buffer pools with sizes ranging from minSize to maxSize,
 // where each pool's size is double the previous one.
-// minSize: the minimum buffer size supported by this pool
-// maxSize: the maximum buffer size supported by this pool
-// Returns a new BucketBufferPool instance and an error if maxSize is less than minSize
+//
+// Parameters:
+//   - minSize: the minimum buffer size supported by this pool
+//   - maxSize: the maximum buffer size supported by this pool
+//
+// Returns:
+//   - *BucketBufferPool: a new BucketBufferPool instance
+//   - error: an error if maxSize is less than minSize
 func NewBucketBufferPool(minSize, maxSize int) (*BucketBufferPool, error) {
 	// Validate that maxSize is not less than minSize
 	if maxSize < minSize {
@@ -80,8 +90,12 @@ func NewBucketBufferPool(minSize, maxSize int) (*BucketBufferPool, error) {
 
 // Get retrieves a suitable bytes.Buffer based on the requested size.
 // If the requested size exceeds maxSize, a new buffer is directly created without pooling.
-// size: the requested buffer size
-// Returns a bytes.Buffer with at least the requested capacity
+//
+// Parameters:
+//   - size: the requested buffer size
+//
+// Returns:
+//   - *bytes.Buffer: a buffer with at least the requested capacity
 func (p *BucketBufferPool) Get(size int) *bytes.Buffer {
 	sp := p.findPool(size) // Find the appropriate pool
 	if sp == nil {
@@ -94,7 +108,9 @@ func (p *BucketBufferPool) Get(size int) *bytes.Buffer {
 
 // Put returns a bytes.Buffer to the appropriate pool based on its capacity.
 // Buffers with capacity exceeding maxSize are not returned to any pool.
-// b: the bytes.Buffer to return to the pool
+//
+// Parameters:
+//   - b: the bytes.Buffer to return to the pool
 func (p *BucketBufferPool) Put(b *bytes.Buffer) {
 	sp := p.findPool(b.Cap()) // Find the pool based on buffer capacity
 	if sp == nil {

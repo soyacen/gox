@@ -6,8 +6,13 @@ import (
 )
 
 // Line returns the current file and line number in the format "file:line".
-// It uses runtime.Caller(1) to get the caller's position if no argument is provided.
-// If skip is provided, it uses runtime.Caller(skip[0]).
+// It uses runtime.Caller to get the caller's position.
+//
+// Parameters:
+//   - skip: Optional number of stack frames to skip (default is 1)
+//
+// Returns:
+//   - string: The file and line number in "file:line" format
 func Line(skip ...int) string {
 	s := 1
 	if len(skip) > 0 {

@@ -10,7 +10,13 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-// Max 获取数组中的最大值
+// Max returns the maximum value in the slice.
+//
+// Parameters:
+//   - s: the input slice.
+//
+// Returns:
+//   - E: the maximum element, or the zero value if the slice is empty.
 func Max[S ~[]E, E cmp.Ordered](s S) E {
 	var r E
 	if len(s) == 0 {
@@ -23,7 +29,13 @@ func Max[S ~[]E, E cmp.Ordered](s S) E {
 	return r
 }
 
-// Min 获取数组中的最小值
+// Min returns the minimum value in the slice.
+//
+// Parameters:
+//   - s: the input slice.
+//
+// Returns:
+//   - E: the minimum element, or the zero value if the slice is empty.
 func Min[S ~[]E, E cmp.Ordered](s S) E {
 	var r E
 	if len(s) == 0 {
@@ -36,7 +48,13 @@ func Min[S ~[]E, E cmp.Ordered](s S) E {
 	return r
 }
 
-// Sum 数组求和
+// Sum returns the sum of all elements in the slice.
+//
+// Parameters:
+//   - s: the input slice.
+//
+// Returns:
+//   - E: the sum of all elements.
 func Sum[S ~[]E, E constraintx.Numeric](s S) E {
 	var r E
 	for _, i := range s {
@@ -45,7 +63,15 @@ func Sum[S ~[]E, E constraintx.Numeric](s S) E {
 	return r
 }
 
-// Zip 将两个切片对应位置的元素组成新的切片
+// Zip interleaves elements from two slices into a single slice.
+// The length of the result is twice the length of the shorter input.
+//
+// Parameters:
+//   - s1: the first input slice.
+//   - s2: the second input slice.
+//
+// Returns:
+//   - S: a new slice with elements interleaved as s1[0], s2[0], s1[1], s2[1], ...
 func Zip[S ~[]E, E any](s1, s2 S) S {
 	minLen := len(s1)
 	if len(s2) < minLen {
@@ -61,6 +87,13 @@ func Zip[S ~[]E, E any](s1, s2 S) S {
 	return r
 }
 
+// Merge concatenates multiple slices into a single slice.
+//
+// Parameters:
+//   - ss: the slices to merge.
+//
+// Returns:
+//   - S: a new slice containing all elements in order.
 func Merge[S ~[]E, E any](ss ...S) S {
 	totalLen := 0
 	for _, s := range ss {
@@ -75,10 +108,26 @@ func Merge[S ~[]E, E any](ss ...S) S {
 	return r
 }
 
+// AppendFirst inserts an element at the beginning of the slice.
+//
+// Parameters:
+//   - s: the input slice.
+//   - e: the element to insert.
+//
+// Returns:
+//   - S: a new slice with the element prepended.
 func AppendFirst[S ~[]E, E any](s S, e E) S {
 	return slices.Insert(s, 0, e)
 }
 
+// AppendIfNotContains appends an element only if it is not already present.
+//
+// Parameters:
+//   - s: the input slice.
+//   - v: the element to append.
+//
+// Returns:
+//   - S: the slice with the element appended, or unchanged if already present.
 func AppendIfNotContains[S ~[]E, E comparable](s S, v E) S {
 	if slices.Contains(s, v) {
 		return s
@@ -86,15 +135,38 @@ func AppendIfNotContains[S ~[]E, E comparable](s S, v E) S {
 	return append(s, v)
 }
 
+// Prepend inserts one or more elements at the beginning of the slice.
+//
+// Parameters:
+//   - s: the input slice.
+//   - elems: the elements to insert.
+//
+// Returns:
+//   - S: a new slice with the elements prepended.
 func Prepend[S ~[]E, E any](s S, elems ...E) S {
 	return slices.Insert(s, 0, elems...)
 }
 
-// AppendUnique appends an element to a raw, if the element is not already in the raw
+// AppendUnique appends an element to the slice if it is not already present.
+//
+// Parameters:
+//   - s: the input slice.
+//   - v: the element to append.
+//
+// Returns:
+//   - S: the slice with the element appended, or unchanged if already present.
 func AppendUnique[S ~[]E, E comparable](s S, v E) S {
 	return AppendIfNotContains(s, v)
 }
 
+// Chunk splits the slice into smaller slices of the given size.
+//
+// Parameters:
+//   - s: the input slice.
+//   - size: the maximum size of each chunk.
+//
+// Returns:
+//   - []S: a slice of chunks.
 func Chunk[S ~[]E, E any](s S, size int) []S {
 	l := len(s)
 	ss2 := make([]S, 0, (l+size)/size)
@@ -108,6 +180,13 @@ func Chunk[S ~[]E, E any](s S, size int) []S {
 	return ss2
 }
 
+// Concat concatenates multiple slices into a single slice.
+//
+// Parameters:
+//   - ss: the slices to concatenate.
+//
+// Returns:
+//   - S: a new slice containing all elements in order.
 func Concat[S ~[]E, E any](ss ...S) S {
 	var length int
 	for _, s := range ss {
@@ -120,10 +199,26 @@ func Concat[S ~[]E, E any](ss ...S) S {
 	return r
 }
 
+// Remove deletes all occurrences of the specified values from the slice.
+//
+// Parameters:
+//   - s: the input slice.
+//   - vs: the values to remove.
+//
+// Returns:
+//   - S: a new slice with the specified values removed.
 func Remove[S ~[]E, E comparable](s S, vs ...E) S {
 	return slices.DeleteFunc(s, func(e E) bool { return slices.Contains(vs, e) })
 }
 
+// RemoveFunc deletes elements that satisfy the predicate function.
+//
+// Parameters:
+//   - s: the input slice.
+//   - f: a function that receives the index and value; returning true removes the element.
+//
+// Returns:
+//   - S: a new slice with matching elements removed.
 func RemoveFunc[S ~[]E, E any](s S, f func(i int, v E) bool) S {
 	var index int
 	return slices.DeleteFunc(s, func(e E) bool {
@@ -133,14 +228,30 @@ func RemoveFunc[S ~[]E, E any](s S, f func(i int, v E) bool) S {
 	})
 }
 
+// RemoveAt deletes elements at the specified indices.
+//
+// Parameters:
+//   - array: the input slice.
+//   - is: the indices to remove.
+//
+// Returns:
+//   - S: a new slice with the specified indices removed.
 func RemoveAt[S ~[]E, E any](array S, is ...int) S {
 	return RemoveFunc(array, func(i int, v E) bool {
 		return slices.Contains(is, i)
 	})
 }
 
-// Difference 返回差集
+// Difference returns the symmetric difference of two slices.
+//
 // Deprecated: Do not use.
+//
+// Parameters:
+//   - s1: the first input slice.
+//   - s2: the second input slice.
+//
+// Returns:
+//   - S: the symmetric difference.
 func Difference[S ~[]E, E comparable](s1 S, s2 S) S {
 	if len(s1) >= len(s2) {
 		return difference(s1, s2)
@@ -158,15 +269,36 @@ func difference[S ~[]E, E comparable](a S, b S) S {
 	return r
 }
 
-// IsEmpty Checks if an raw is nil or length equals 0
+// IsEmpty reports whether the slice is nil or has length zero.
+//
+// Parameters:
+//   - s: the input slice.
+//
+// Returns:
+//   - bool: true if the slice is nil or empty.
 func IsEmpty[S ~[]E, E any](s S) bool {
 	return len(s) <= 0
 }
 
+// IsNotEmpty reports whether the slice has at least one element.
+//
+// Parameters:
+//   - s: the input slice.
+//
+// Returns:
+//   - bool: true if the slice is not empty.
 func IsNotEmpty[S ~[]E, E any](s S) bool {
 	return len(s) > 0
 }
 
+// Filter returns a new slice containing only elements that satisfy the predicate.
+//
+// Parameters:
+//   - s: the input slice.
+//   - f: a function that receives the index and value; returning true keeps the element.
+//
+// Returns:
+//   - S: a new slice with only matching elements.
 func Filter[S ~[]E, E any](s S, f func(int, E) bool) S {
 	var r S
 	for i, e := range s {
@@ -177,6 +309,15 @@ func Filter[S ~[]E, E any](s S, f func(int, E) bool) S {
 	return r
 }
 
+// FindFunc returns the first element that satisfies the predicate and a boolean indicating success.
+//
+// Parameters:
+//   - s: the input slice.
+//   - f: the predicate function.
+//
+// Returns:
+//   - E: the found element (zero value if not found).
+//   - bool: true if an element was found.
 func FindFunc[E any](s []E, f func(E) bool) (E, bool) {
 	if i := slices.IndexFunc(s, f); i != -1 {
 		return s[i], true
@@ -185,6 +326,15 @@ func FindFunc[E any](s []E, f func(E) bool) (E, bool) {
 	return e, false
 }
 
+// IndexOrDefault returns the element at the given index, or a default value if out of bounds.
+//
+// Parameters:
+//   - s: the input slice.
+//   - index: the index to access.
+//   - d: the default value to return if index is out of bounds.
+//
+// Returns:
+//   - E: the element at index or the default value.
 func IndexOrDefault[S ~[]E, E any](s S, index int, d E) E {
 	if len(s) > index {
 		return s[index]
@@ -192,6 +342,14 @@ func IndexOrDefault[S ~[]E, E any](s S, index int, d E) E {
 	return d
 }
 
+// LastIndex returns the last index of the specified value, or -1 if not found.
+//
+// Parameters:
+//   - s: the input slice.
+//   - v: the value to search for.
+//
+// Returns:
+//   - int: the last index of the value, or -1.
 func LastIndex[E comparable](s []E, v E) int {
 	for i := len(s) - 1; i > -1; i-- {
 		if v == s[i] {
@@ -201,6 +359,14 @@ func LastIndex[E comparable](s []E, v E) int {
 	return -1
 }
 
+// Indexes returns all indices of the specified value.
+//
+// Parameters:
+//   - s: the input slice.
+//   - v: the value to search for.
+//
+// Returns:
+//   - []int: all indices where the value occurs.
 func Indexes[E comparable](s []E, v E) []int {
 	var r []int
 	for i, vs := range s {
@@ -211,6 +377,14 @@ func Indexes[E comparable](s []E, v E) []int {
 	return r
 }
 
+// IndexesFunc returns all indices of elements that satisfy the predicate.
+//
+// Parameters:
+//   - s: the input slice.
+//   - f: the predicate function.
+//
+// Returns:
+//   - []int: all indices where the predicate returns true.
 func IndexesFunc[E any](s []E, f func(E) bool) []int {
 	var r []int
 	for i, v := range s {
@@ -221,28 +395,43 @@ func IndexesFunc[E any](s []E, f func(E) bool) []int {
 	return r
 }
 
-// Insert 在切片的指定位置插入元素
+// Insert inserts an element at the specified index.
+//
+// Parameters:
+//   - s: the input slice.
+//   - i: the index at which to insert.
+//   - e: the element to insert.
+//
+// Returns:
+//   - S: a new slice with the element inserted.
 func Insert[S ~[]E, E any](s S, i int, e E) S {
-	// 创建一个新的切片，长度比原切片多1
 	r := make(S, len(s)+1)
-
-	// 将原切片的前index个元素复制到新切片
 	copy(r, s[:i])
-
-	// 插入要插入的元素
 	r[i] = e
-
-	// 将原切片的index及之后的元素复制到新切片
 	copy(r[i+1:], s[i:])
-
 	return r
 }
 
+// IsSameLength reports whether two slices have the same length.
+//
+// Parameters:
+//   - s1: the first slice.
+//   - s2: the second slice.
+//
+// Returns:
+//   - bool: true if both slices have the same length.
 func IsSameLength[S ~[]E, E any](s1 S, s2 S) bool {
 	return len(s1) == len(s2)
 }
 
-// Map 方法创建一个新数组，这个新数组由原数组中的每个元素都调用一次提供的函数后的返回值组成。
+// Map creates a new slice by applying a function to each element.
+//
+// Parameters:
+//   - s: the input slice.
+//   - f: a function that receives the index and value and returns a new value.
+//
+// Returns:
+//   - S2: a new slice with transformed elements.
 func Map[S1 ~[]E1, S2 ~[]E2, E1 any, E2 any](s S1, f func(int, E1) E2) S2 {
 	if s == nil {
 		return nil
@@ -254,7 +443,15 @@ func Map[S1 ~[]E1, S2 ~[]E2, E1 any, E2 any](s S1, f func(int, E1) E2) S2 {
 	return s2
 }
 
-// MapElem 两个切片s1，s2,，获取v所有s1同位置的s2的值
+// MapElem looks up a value in s1 and returns the corresponding element at the same position in s2.
+//
+// Parameters:
+//   - v: the value to look up in s1.
+//   - s1: the lookup slice.
+//   - s2: the result slice.
+//
+// Returns:
+//   - E2: the corresponding element from s2, or the zero value if not found.
 func MapElem[S1 ~[]E1, S2 ~[]E2, E1 comparable, E2 any](v E1, s1 S1, s2 S2) E2 {
 	var r E2
 	if len(s1) != len(s2) {
@@ -268,7 +465,14 @@ func MapElem[S1 ~[]E1, S2 ~[]E2, E1 comparable, E2 any](v E1, s1 S1, s2 S2) E2 {
 	return r
 }
 
-// ContainsAny checks if any of the elem are in the given raw.
+// ContainsAny reports whether any of the values are present in the slice.
+//
+// Parameters:
+//   - s: the input slice.
+//   - vs: the values to search for.
+//
+// Returns:
+//   - bool: true if at least one value is found.
 func ContainsAny[E comparable](s []E, vs ...E) bool {
 	for _, v := range vs {
 		if slices.Contains(s, v) {
@@ -278,7 +482,14 @@ func ContainsAny[E comparable](s []E, vs ...E) bool {
 	return false
 }
 
-// ContainsAll checks if all of the elem are in the given raw.
+// ContainsAll reports whether all of the values are present in the slice.
+//
+// Parameters:
+//   - s: the input slice.
+//   - vs: the values to search for.
+//
+// Returns:
+//   - bool: true if all values are found.
 func ContainsAll[E comparable](s []E, vs ...E) bool {
 	for _, v := range vs {
 		if NotContains(s, v) {
@@ -288,17 +499,39 @@ func ContainsAll[E comparable](s []E, vs ...E) bool {
 	return true
 }
 
-// NotContains reports whether v is not present in s.
+// NotContains reports whether the value is not present in the slice.
+//
+// Parameters:
+//   - s: the input slice.
+//   - v: the value to check.
+//
+// Returns:
+//   - bool: true if the value is not present.
 func NotContains[E comparable](s []E, v E) bool {
 	return !slices.Contains(s, v)
 }
 
-// NotContainsFunc reports whether v is not present in s.
+// NotContainsFunc reports whether no element satisfies the predicate.
+//
+// Parameters:
+//   - s: the input slice.
+//   - f: the predicate function.
+//
+// Returns:
+//   - bool: true if no element satisfies the predicate.
 func NotContainsFunc[E any](s []E, f func(E) bool) bool {
 	return !slices.ContainsFunc(s, f)
 }
 
-// PadStart 如果slice长度小于 length 则在左侧填充val。
+// PadStart pads the slice on the left with the given value until it reaches the specified size.
+//
+// Parameters:
+//   - s: the input slice.
+//   - size: the desired length.
+//   - val: the value to pad with.
+//
+// Returns:
+//   - S: a new slice padded on the left.
 func PadStart[S ~[]E, E any](s S, size int, val E) S {
 	if size <= len(s) {
 		return slices.Clone(s)
@@ -311,7 +544,15 @@ func PadStart[S ~[]E, E any](s S, size int, val E) S {
 	return r
 }
 
-// PadEnd 如果slice长度小于 length 则在右侧填充val。
+// PadEnd pads the slice on the right with the given value until it reaches the specified size.
+//
+// Parameters:
+//   - s: the input slice.
+//   - size: the desired length.
+//   - val: the value to pad with.
+//
+// Returns:
+//   - S: a new slice padded on the right.
 func PadEnd[S ~[]E, E any](s S, size int, val E) S {
 	if size <= len(s) {
 		return slices.Clone(s)
@@ -324,6 +565,15 @@ func PadEnd[S ~[]E, E any](s S, size int, val E) S {
 	return r
 }
 
+// Reduce reduces the slice to a single value using an accumulator function.
+//
+// Parameters:
+//   - s: the input slice.
+//   - initValue: the initial value of the accumulator.
+//   - f: the reducer function receiving accumulator, current value, index, and the slice.
+//
+// Returns:
+//   - R: the final accumulated value.
 func Reduce[S ~[]E, E any, R any](s S, initValue R, f func(previousValue R, currentValue E, currentIndex int, s S) R) R {
 	r := initValue
 	for i, e := range s {
@@ -332,12 +582,25 @@ func Reduce[S ~[]E, E any, R any](s S, initValue R, f func(previousValue R, curr
 	return r
 }
 
-// Reverse reverses the elements of the raw in place.
+// Reverse reverses the elements of the slice in place.
+//
+// Parameters:
+//   - s: the input slice.
+//
+// Returns:
+//   - S: the reversed slice (same underlying array).
 func Reverse[S ~[]E, E any](s S) S {
 	slices.Reverse(s)
 	return s
 }
 
+// ToSet converts the slice to a set represented as a map.
+//
+// Parameters:
+//   - s: the input slice.
+//
+// Returns:
+//   - M: a map with slice elements as keys.
 func ToSet[S ~[]E, M ~map[E]struct{}, E comparable](s S) M {
 	r := make(M)
 	for _, e := range s {
@@ -346,6 +609,14 @@ func ToSet[S ~[]E, M ~map[E]struct{}, E comparable](s S) M {
 	return r
 }
 
+// SetAll sets each element of the slice using the provided function.
+//
+// Parameters:
+//   - s: the input slice.
+//   - f: a function that receives the index and returns the new value.
+//
+// Returns:
+//   - S: the modified slice.
 func SetAll[S ~[]E, E any](s S, f func(int) E) S {
 	for i := range s {
 		s[i] = f(i)
@@ -353,6 +624,11 @@ func SetAll[S ~[]E, E any](s S, f func(int) E) S {
 	return s
 }
 
+// Shift rotates the slice in place by the given offset.
+//
+// Parameters:
+//   - array: the input slice.
+//   - offset: the number of positions to rotate.
 func Shift[S ~[]E, E any](array S, offset int) {
 	if len(array) <= 0 {
 		return
@@ -360,6 +636,13 @@ func Shift[S ~[]E, E any](array S, offset int) {
 	Shifta(array, 0, len(array), offset)
 }
 
+// Shifta rotates a subrange of the slice in place by the given offset.
+//
+// Parameters:
+//   - array: the input slice.
+//   - startIndexInclusive: the start index of the range (inclusive).
+//   - endIndexExclusive: the end index of the range (exclusive).
+//   - offset: the number of positions to rotate.
 func Shifta[S ~[]E, E any](array S, startIndexInclusive, endIndexExclusive, offset int) {
 	if len(array) <= 0 || startIndexInclusive >= len(array)-1 || endIndexExclusive <= 0 {
 		return
@@ -398,11 +681,13 @@ func Shifta[S ~[]E, E any](array S, startIndexInclusive, endIndexExclusive, offs
 	}
 }
 
-// Swap swaps a series of elements in the given array.
-// array the array to swap.
-// offset1 the index of the first element in the series to swap.
-// offset2 the index of the second element in the series to swap.
-// length the number of elements to swap starting with the given indices.
+// Swap swaps a series of elements between two positions in the slice.
+//
+// Parameters:
+//   - array: the input slice.
+//   - offset1: the starting index of the first series.
+//   - offset2: the starting index of the second series.
+//   - length: the number of elements to swap.
 func Swap[S ~[]E, E any](array S, offset1, offset2, length int) {
 	if IsEmpty(array) || offset1 >= len(array) || offset2 >= len(array) {
 		return
@@ -423,7 +708,13 @@ func Swap[S ~[]E, E any](array S, offset1, offset2, length int) {
 	}
 }
 
-// Shuffle 打乱数组顺序
+// Shuffle randomizes the order of elements in the slice.
+//
+// Parameters:
+//   - s: the input slice.
+//
+// Returns:
+//   - S: the shuffled slice (same underlying array).
 func Shuffle[S ~[]E, E any](s S) S {
 	r := randx.GetPCG()
 	r.Shuffle(len(s), func(i, j int) {
@@ -433,19 +724,24 @@ func Shuffle[S ~[]E, E any](s S) S {
 	return s
 }
 
-// 随机打乱直到没有相邻元素相同
+// ShuffleNoAdjacent shuffles the slice so that no two adjacent elements are equal.
+// If it is impossible, the original slice is returned.
+//
+// Parameters:
+//   - s: the input slice.
+//
+// Returns:
+//   - S: the shuffled slice, or the original if impossible.
 func ShuffleNoAdjacent[S ~[]E, E comparable](s S) S {
 	if len(s) <= 1 {
 		return s
 	}
 
-	// 统计每个元素的出现次数
 	count := make(map[E]int)
 	for _, v := range s {
 		count[v]++
 	}
 
-	// 检查是否可能实现无相邻重复
 	maxCount := 0
 	for _, c := range count {
 		if c > maxCount {
@@ -453,19 +749,16 @@ func ShuffleNoAdjacent[S ~[]E, E comparable](s S) S {
 		}
 	}
 
-	// 如果某个元素出现次数超过总长度的一半+1，则无法实现无相邻重复
 	if maxCount > (len(s)+1)/2 {
-		return s // 返回原数组或错误处理
+		return s
 	}
 
-	// 使用更智能的排列算法
 	return rearrangeNoAdjacent(s, count)
 }
 
 func rearrangeNoAdjacent[S ~[]E, E comparable](s S, count map[E]int) S {
 	result := make(S, len(s))
 
-	// 按出现次数排序元素
 	type elemCount struct {
 		elem  E
 		count int
@@ -476,19 +769,17 @@ func rearrangeNoAdjacent[S ~[]E, E comparable](s S, count map[E]int) S {
 		elems = append(elems, elemCount{e, c})
 	}
 
-	// 按计数降序排序
 	sort.Slice(elems, func(i, j int) bool {
 		return elems[i].count > elems[j].count
 	})
 
-	// 先填充偶数位置，再填充奇数位置
 	index := 0
 	for _, ec := range elems {
 		for i := 0; i < ec.count; i++ {
 			result[index] = ec.elem
 			index += 2
 			if index >= len(result) {
-				index = 1 // 切换到奇数位置
+				index = 1
 			}
 		}
 	}
@@ -496,7 +787,13 @@ func rearrangeNoAdjacent[S ~[]E, E comparable](s S, count map[E]int) S {
 	return result
 }
 
-// 检查是否有相邻元素相同
+// HasAdjacentDuplicates reports whether the slice contains any adjacent duplicate elements.
+//
+// Parameters:
+//   - s: the input slice.
+//
+// Returns:
+//   - bool: true if any adjacent elements are equal.
 func HasAdjacentDuplicates[S ~[]E, E comparable](s S) bool {
 	for i := 0; i < len(s)-1; i++ {
 		if s[i] == s[i+1] {
@@ -506,7 +803,14 @@ func HasAdjacentDuplicates[S ~[]E, E comparable](s S) bool {
 	return false
 }
 
-// ToMap 方法创建一个Map，这个Map由原数组中的每个元素都调用一次提供的函数后的返回值作为Key、每个元素作为Value组成。
+// ToMap creates a map from the slice using a key-generating function.
+//
+// Parameters:
+//   - s: the input slice.
+//   - f: a function that receives the index and value and returns the key.
+//
+// Returns:
+//   - M: a map with keys from f and values from the slice.
 func ToMap[S ~[]E, M ~map[K]E, E any, K comparable](s S, f func(int, E) K) M {
 	m := make(M, len(s))
 	for i, v := range s {
@@ -515,7 +819,14 @@ func ToMap[S ~[]E, M ~map[K]E, E any, K comparable](s S, f func(int, E) K) M {
 	return m
 }
 
-// GroupBy 函数将输入切片中的元素按照指定函数分组，并返回一个Map，其中键是分组的依据，值是对应元素的列表。
+// GroupBy groups slice elements by a key-generating function.
+//
+// Parameters:
+//   - s: the input slice.
+//   - f: a function that receives the index and value and returns the group key.
+//
+// Returns:
+//   - M: a map where keys are group keys and values are slices of elements.
 func GroupBy[M ~map[K]S, S ~[]E, E any, K comparable](s S, f func(int, E) K) M {
 	m := make(M, len(s))
 	for i, v := range s {
@@ -525,7 +836,14 @@ func GroupBy[M ~map[K]S, S ~[]E, E any, K comparable](s S, f func(int, E) K) M {
 	return m
 }
 
-// Uniq 用于去除切片中的重复元素并返回新切片。对于短切片，它通过逐个检查元素去重；对于长切片，使用Map提高效率。
+// Uniq returns a new slice with duplicate elements removed.
+// For short slices it checks each element; for long slices it uses a map for efficiency.
+//
+// Parameters:
+//   - s: the input slice.
+//
+// Returns:
+//   - S: a new slice with duplicates removed.
 func Uniq[S ~[]E, E comparable](s S) S {
 	if s == nil {
 		return nil
@@ -558,6 +876,15 @@ func uniqV2[S ~[]E, E comparable](s S) S {
 	return r
 }
 
+// SafeSlice returns a sub-slice safely, clamping bounds to the valid range.
+//
+// Parameters:
+//   - s: the input slice.
+//   - start: the start index.
+//   - length: the number of elements to include.
+//
+// Returns:
+//   - S: the sub-slice, or an empty slice if parameters are invalid.
 func SafeSlice[S ~[]E, E comparable](s S, start, length int) S {
 	var r S
 	if start < 0 || length < 0 {

@@ -5,71 +5,82 @@ import (
 	"unsafe"
 )
 
-// LockFreeQueue 基于无锁队列实现,通过链表实现
+// LockFreeQueue is a lock-free queue implementation based on a linked list.
 type LockFreeQueue struct {
-	// headPtr 队列头指针
+	// headPtr is the head pointer of the queue.
 	headPtr unsafe.Pointer
-	// tailPtr 队列尾指针
+	// tailPtr is the tail pointer of the queue.
 	tailPtr unsafe.Pointer
 }
 
-// lockFreeElement 代表链表中的节点
+// lockFreeElement represents a node in the linked list.
 type lockFreeElement struct {
 	value   any
 	nextPtr unsafe.Pointer
 }
 
-// NewLockFreeQueue 创建无锁队列
+// NewLockFreeQueue creates and returns a new lock-free queue.
+//
 // Reference: https://www.sobyte.net/post/2021-07/implementing-lock-free-queues-with-go/
+//
+// Returns:
+//   - *LockFreeQueue: a new empty lock-free queue.
 func NewLockFreeQueue() *LockFreeQueue {
 	elemPtr := unsafe.Pointer(&lockFreeElement{})
 	return &LockFreeQueue{headPtr: elemPtr, tailPtr: elemPtr}
 }
 
-// Enqueue 入队
+// Enqueue adds a value to the tail of the queue.
+//
+// Parameters:
+//   - v: the value to enqueue.
 func (q *LockFreeQueue) Enqueue(v any) {
 	n := &lockFreeElement{value: v}
 	for {
 		tail := load(&q.tailPtr)
 		next := load(&tail.nextPtr)
-		// 尾还是尾
+		// tail is still tail
 		if tail == load(&q.tailPtr) {
-			// 还没有新数据入队
+			// no new element has been enqueued yet
 			if next == nil {
-				//增加到队尾
+				// add to the tail
 				if cas(&tail.nextPtr, next, n) {
-					//入队成功，移动尾巴指针
+					// enqueue succeeded, move tail pointer
 					_ = cas(&q.tailPtr, tail, n)
 					return
 				}
 			} else {
-				// 已有新数据加到队列后面，需要移动尾指针
+				// a new element has been added, need to move tail pointer
 				_ = cas(&q.tailPtr, tail, next)
 			}
 		}
 	}
 }
 
-// Dequeue 出队，没有元素则返回nil
+// Dequeue removes and returns the value at the head of the queue.
+// Returns nil if the queue is empty.
+//
+// Returns:
+//   - any: the dequeued value, or nil if the queue is empty.
 func (q *LockFreeQueue) Dequeue() any {
 	for {
 		head := load(&q.headPtr)
 		tail := load(&q.tailPtr)
 		next := load(&head.nextPtr)
-		// head还是那个head
+		// head is still head
 		if head == load(&q.headPtr) {
-			// head和tail一样
+			// head and tail are the same
 			if head == tail {
-				// 说明是空队列
+				// empty queue
 				if next == nil {
 					return nil
 				}
-				// 只是尾指针还没有调整，尝试调整它指向下一个
+				// tail pointer hasn't been adjusted yet, try to move it
 				_ = cas(&q.tailPtr, tail, next)
 			} else {
-				// 读取出队的数据
+				// read the value to dequeue
 				v := next.value
-				// 既然要出队了，头指针移动到下一个
+				// move head pointer to next
 				if cas(&q.headPtr, head, next) {
 					// Dequeue is done.
 					return v

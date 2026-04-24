@@ -11,11 +11,11 @@ import (
 	"time"
 )
 
-// Package-level error variables
+// Package-level error variables.
 var (
-	// ErrTaskInvalid is returned when the processing task function is nil
+	// ErrTaskInvalid is returned when the processing task function is nil.
 	ErrTaskInvalid = errors.New("asyncbatch: task is nil")
-	// ErrClosed is returned when trying to operate on a closed Group
+	// ErrClosed is returned when trying to operate on a closed Group.
 	ErrClosed = errors.New("asyncbatch: group is closed")
 )
 
@@ -29,24 +29,42 @@ type options struct {
 	Recover func(p any, stack []byte)
 }
 
-// Option is a function that configures options
+// Option configures Group options.
 type Option func(*options)
 
-// Size returns an Option that sets the batch size threshold
+// Size returns an Option that sets the batch size threshold.
+//
+// Parameters:
+//   - size: the batch size threshold.
+//
+// Returns:
+//   - Option: the configuration option.
 func Size(size int) Option {
 	return func(o *options) {
 		o.Size = size
 	}
 }
 
-// Interval returns an Option that sets the time interval for processing
+// Interval returns an Option that sets the time interval for processing.
+//
+// Parameters:
+//   - interval: the time interval for processing.
+//
+// Returns:
+//   - Option: the configuration option.
 func Interval(interval time.Duration) Option {
 	return func(o *options) {
 		o.Interval = interval
 	}
 }
 
-// Recover returns an Option that sets the panic recovery handler
+// Recover returns an Option that sets the panic recovery handler.
+//
+// Parameters:
+//   - f: the panic recovery handler function.
+//
+// Returns:
+//   - Option: the configuration option.
 func Recover(f func(p any, stack []byte)) Option {
 	return func(o *options) {
 		o.Recover = f
@@ -81,7 +99,7 @@ func (o *options) Correct() *options {
 	return o
 }
 
-// Group is a generic struct for asynchronously batch processing objects of type Obj
+// Group is a generic struct for asynchronously batch processing objects of type Obj.
 type Group[Obj any] struct {
 	// options contains the configuration options for this Group
 	options *options
@@ -101,10 +119,15 @@ type Group[Obj any] struct {
 	task func(objs []Obj)
 }
 
-// New creates a new Group instance
-// task: the actual function that processes batches of objects
-// opts: optional configuration functions
-// Returns the created Group instance and possible error
+// New creates a new Group instance.
+//
+// Parameters:
+//   - task: the actual function that processes batches of objects.
+//   - opts: optional configuration functions.
+//
+// Returns:
+//   - *Group[Obj]: the created Group instance.
+//   - error: possible error.
 func New[Obj any](task func(objs []Obj), opts ...Option) (*Group[Obj], error) {
 	// Validate task function
 	if task == nil {
@@ -141,9 +164,13 @@ func New[Obj any](task func(objs []Obj), opts ...Option) (*Group[Obj], error) {
 	return g, nil
 }
 
-// Submit submits an object to the Group
-// obj: the object to submit
-// Returns nil on success, ErrClosed if the Group is closed
+// Submit submits an object to the Group.
+//
+// Parameters:
+//   - obj: the object to submit.
+//
+// Returns:
+//   - error: nil on success, ErrClosed if the Group is closed.
 func (g *Group[Obj]) Submit(obj Obj) error {
 	// Check if Group is closed (fast path)
 	if g.closed.Load() {
@@ -175,8 +202,10 @@ func (g *Group[Obj]) Submit(obj Obj) error {
 	return nil
 }
 
-// Close closes the Group, processes remaining objects and waits for completion
-// Returns nil on successful close, ErrClosed if already closed
+// Close closes the Group, processes remaining objects and waits for completion.
+//
+// Returns:
+//   - error: nil on successful close, ErrClosed if already closed.
 func (g *Group[Obj]) Close() error {
 	// Check if Group is closed (fast path)
 	if g.closed.Load() {

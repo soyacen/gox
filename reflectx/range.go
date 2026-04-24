@@ -5,6 +5,14 @@ import (
 	"reflect"
 )
 
+// RangeArrayOrSlice converts an array or slice into a slice of any.
+//
+// Parameters:
+//   - obj: The array or slice to convert.
+//
+// Returns:
+//   - []any: A slice containing all elements of the array or slice.
+//   - error: An error if obj is not an array or slice.
 func RangeArrayOrSlice(obj any) ([]any, error) {
 	objValue := reflect.ValueOf(obj)
 	if objValue.Kind() != reflect.Array && objValue.Kind() != reflect.Slice {
@@ -18,6 +26,15 @@ func RangeArrayOrSlice(obj any) ([]any, error) {
 	return res, nil
 }
 
+// RangeMap converts a map into two slices: one for keys and one for values.
+//
+// Parameters:
+//   - obj: The map to convert.
+//
+// Returns:
+//   - []any: A slice containing all keys of the map.
+//   - []any: A slice containing all values of the map.
+//   - error: An error if obj is not a map.
 func RangeMap(obj any) ([]any, []any, error) {
 	objValue := reflect.ValueOf(obj)
 	if objValue.Kind() != reflect.Map {

@@ -6,14 +6,24 @@ import (
 	"unsafe"
 )
 
-// StringToBytes converts string to byte slice without a memory allocation.
-// For more details, see https://github.com/golang/go/issues/53003#issuecomment-1140276077.
+// StringToBytes converts a string to a byte slice without a memory allocation.
+//
+// Parameters:
+//   - s: the string to convert.
+//
+// Returns:
+//   - []byte: the byte slice referencing the string's underlying data.
 func StringToBytes(s string) []byte {
 	return unsafe.Slice(unsafe.StringData(s), len(s))
 }
 
-// BytesToString converts byte slice to string without a memory allocation.
-// For more details, see https://github.com/golang/go/issues/53003#issuecomment-1140276077.
+// BytesToString converts a byte slice to a string without a memory allocation.
+//
+// Parameters:
+//   - b: the byte slice to convert.
+//
+// Returns:
+//   - string: the string referencing the slice's underlying data.
 func BytesToString(b []byte) string {
 	return unsafe.String(unsafe.SliceData(b), len(b))
 }

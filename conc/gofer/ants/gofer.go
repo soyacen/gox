@@ -1,4 +1,4 @@
-// Package ants 实现了基于ants库的Gofer接口
+// Package ants implements the Gofer interface using the ants library.
 package ants
 
 import (
@@ -6,29 +6,37 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/soyacen/gox/conc/gofer"
 	ants "github.com/panjf2000/ants/v2"
+	"github.com/soyacen/gox/conc/gofer"
 )
 
-// 确保Gofer实现了gofer.Gofer接口
+// Ensure Gofer implements the gofer.Gofer interface.
 var _ gofer.Gofer = (*Gofer)(nil)
 
-// Gofer 是基于ants池的异步任务执行器实现
+// Gofer is an asynchronous task executor implementation based on ants pool.
 type Gofer struct {
-	// Pool 底层的ants工作池
+	// Pool is the underlying ants worker pool.
 	Pool *ants.Pool
 }
 
-// Go 提交一个任务到ants池中执行
-// f: 要执行的任务函数
-// 返回ants.Pool.Submit的错误结果
+// Go submits a task to the ants pool for execution.
+//
+// Parameters:
+//   - f: the task function to execute.
+//
+// Returns:
+//   - error: the error returned by ants.Pool.Submit.
 func (g *Gofer) Go(f func()) error {
 	return g.Pool.Submit(f)
 }
 
-// Close 释放ants池资源
-// ctx: 上下文参数，用于控制关闭超时
-// 返回错误信息，如果关闭过程中出现错误则返回具体错误
+// Close releases the ants pool resources.
+//
+// Parameters:
+//   - ctx: the context used to control shutdown timeout.
+//
+// Returns:
+//   - error: an error if the shutdown process encounters any issues.
 func (g *Gofer) Close(ctx context.Context) error {
 	// 获取上下文的截止时间
 	deadline, ok := ctx.Deadline()

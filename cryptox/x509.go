@@ -5,7 +5,13 @@ import (
 	"encoding/pem"
 )
 
-// CertToPEMString taxes an x509 cert and returns a PEM encoded string version.
+// CertToPEMString takes an x509 certificate and returns a PEM-encoded string.
+//
+// Parameters:
+//   - cert: the x509 certificate to encode
+//
+// Returns:
+//   - string: the PEM-encoded certificate
 func CertToPEMString(cert *x509.Certificate) string {
 	block := pem.Block{
 		Type:  "CERTIFICATE",

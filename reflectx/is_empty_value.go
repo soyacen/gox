@@ -2,6 +2,13 @@ package reflectx
 
 import "reflect"
 
+// IsEmptyValue checks whether the given reflect.Value is considered empty.
+//
+// Parameters:
+//   - v: The reflect.Value to check.
+//
+// Returns:
+//   - bool: True if the value is empty, false otherwise.
 func IsEmptyValue(v reflect.Value) bool {
 	switch v.Kind() {
 	case reflect.Array, reflect.Map, reflect.Slice, reflect.String:

@@ -28,9 +28,18 @@ import (
 	"sync"
 )
 
+// ErrNoCallbacks is returned when no callbacks are provided to Race, All, or Retry.
 var ErrNoCallbacks = errors.New("waiter: no callback to run")
 
-// AsyncFunc represents asynchronous function
+// AsyncFunc represents an asynchronous function that can be executed by Race, All, or Retry.
+// It receives a context and returns a result and an error.
+//
+// Parameters:
+//   - ctx: the context for cancellation and deadlines
+//
+// Returns:
+//   - interface{}: the result of the function execution
+//   - error: any error that occurred during execution
 type AsyncFunc func(ctx context.Context) (interface{}, error)
 
 type response struct {
@@ -38,9 +47,18 @@ type response struct {
 	err error
 }
 
-// Race method returns a response as soon as one of the callbacks executes without an error,
-// otherwise last error is returned
-// will panic if context is nil
+// Race executes multiple asynchronous functions concurrently and returns the result
+// from the first one that completes without an error.
+// If all callbacks fail, the last error is returned.
+// Will panic if context is nil.
+//
+// Parameters:
+//   - ctx: the context for cancellation and deadlines
+//   - fns: one or more asynchronous functions to execute
+//
+// Returns:
+//   - interface{}: the result from the first successful callback
+//   - error: any error that occurred, or ErrNoCallbacks if no callbacks are provided
 func Race(ctx context.Context, fns ...AsyncFunc) (interface{}, error) {
 	if ctx == nil {
 		panic("nil context provided")
@@ -108,9 +126,17 @@ func Race(ctx context.Context, fns ...AsyncFunc) (interface{}, error) {
 	return r.res, r.err
 }
 
-// All method returns when all the callbacks passed as an iterable have finished,
-// returned responses and errors are ordered according to callback order
-// will panic if context is nil
+// All executes all asynchronous functions concurrently and waits for all of them to complete.
+// The returned responses and errors are ordered according to the callback order.
+// Will panic if context is nil.
+//
+// Parameters:
+//   - ctx: the context for cancellation and deadlines
+//   - fns: one or more asynchronous functions to execute
+//
+// Returns:
+//   - []interface{}: the results from all callbacks, ordered by callback index
+//   - []error: the errors from all callbacks, ordered by callback index
 func All(ctx context.Context, fns ...AsyncFunc) ([]interface{}, []error) {
 	if ctx == nil {
 		panic("nil context provided")
@@ -139,9 +165,19 @@ func All(ctx context.Context, fns ...AsyncFunc) ([]interface{}, []error) {
 	return rs, errs
 }
 
-// Retry method retries callback given amount of times until it executes without an error,
-// when retries = 0 it will retry infinitely
-// will panic if context is nil
+// Retry retries the given asynchronous function until it executes without an error
+// or the maximum number of retries is reached.
+// When retries = 0, it will retry infinitely.
+// Will panic if context is nil.
+//
+// Parameters:
+//   - ctx: the context for cancellation and deadlines
+//   - retries: the maximum number of retries, or 0 for infinite retries
+//   - fn: the asynchronous function to retry
+//
+// Returns:
+//   - interface{}: the result from the successful execution
+//   - error: any error that occurred after all retries are exhausted
 func Retry(ctx context.Context, retires int, fn AsyncFunc) (interface{}, error) {
 	if ctx == nil {
 		panic("nil context provided")

@@ -3,6 +3,13 @@ package stringx
 import "strings"
 
 // Remove takes a string candidate and a string of chars to remove from the candidate.
+//
+// Parameters:
+//   - s: the source string.
+//   - chars: the characters to remove.
+//
+// Returns:
+//   - string: the string with characters removed.
 func Remove(s string, chars string) string {
 	buf := &strings.Builder{}
 	for len(s) > 0 {

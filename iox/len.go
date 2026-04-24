@@ -4,6 +4,15 @@ import (
 	"io"
 )
 
+// Len attempts to determine the length of the reader.
+// It checks for Len(), Length(), and Size() methods on the reader.
+//
+// Parameters:
+//   - reader: the io.Reader to measure
+//
+// Returns:
+//   - uint64: the length if available
+//   - bool: true if the length could be determined
 func Len(reader io.Reader) (uint64, bool) {
 	switch lener := reader.(type) {
 	case interface{ Len() int }:

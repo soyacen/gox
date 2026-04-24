@@ -9,31 +9,67 @@ import (
 	"io"
 )
 
-// Cipher 加密解密接口
+// Cipher defines the interface for AES encryption and decryption operations.
 type Cipher interface {
-	// Encrypt 加密
+	// Encrypt encrypts plaintext using the provided key.
+	//
+	// Parameters:
+	//   - plaintext: the data to encrypt
+	//   - key: the encryption key
+	//
+	// Returns:
+	//   - []byte: the encrypted ciphertext
+	//   - error: any error encountered during encryption
 	Encrypt(plaintext, key []byte) ([]byte, error)
 
-	// Decrypt 解密
+	// Decrypt decrypts ciphertext using the provided key.
+	//
+	// Parameters:
+	//   - ciphertext: the data to decrypt
+	//   - key: the decryption key
+	//
+	// Returns:
+	//   - []byte: the decrypted plaintext
+	//   - error: any error encountered during decryption
 	Decrypt(ciphertext, key []byte) ([]byte, error)
 }
 
+// ECB returns a Cipher that uses Electronic Codebook (ECB) mode.
+//
+// Returns:
+//   - Cipher: an ECB mode cipher instance
 func ECB() Cipher {
 	return ecb{}
 }
 
+// CBC returns a Cipher that uses Cipher Block Chaining (CBC) mode.
+//
+// Returns:
+//   - Cipher: a CBC mode cipher instance
 func CBC() Cipher {
 	return cbc{}
 }
 
+// CFB returns a Cipher that uses Cipher Feedback (CFB) mode.
+//
+// Returns:
+//   - Cipher: a CFB mode cipher instance
 func CFB() Cipher {
 	return cfb{}
 }
 
+// OFB returns a Cipher that uses Output Feedback (OFB) mode.
+//
+// Returns:
+//   - Cipher: an OFB mode cipher instance
 func OFB() Cipher {
 	return ofb{}
 }
 
+// CTR returns a Cipher that uses Counter (CTR) mode.
+//
+// Returns:
+//   - Cipher: a CTR mode cipher instance
 func CTR() Cipher {
 	return ctr{}
 }
@@ -41,7 +77,15 @@ func CTR() Cipher {
 type ecb struct {
 }
 
-// Encrypt 加密
+// Encrypt encrypts plaintext using ECB mode.
+//
+// Parameters:
+//   - plaintext: the data to encrypt
+//   - key: the encryption key
+//
+// Returns:
+//   - []byte: the encrypted ciphertext
+//   - error: any error encountered during encryption
 func (ecb) Encrypt(plaintext, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -57,7 +101,15 @@ func (ecb) Encrypt(plaintext, key []byte) ([]byte, error) {
 	return ciphertext, nil
 }
 
-// Decrypt 解密
+// Decrypt decrypts ciphertext using ECB mode.
+//
+// Parameters:
+//   - ciphertext: the data to decrypt
+//   - key: the decryption key
+//
+// Returns:
+//   - []byte: the decrypted plaintext
+//   - error: any error encountered during decryption
 func (ecb) Decrypt(ciphertext, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -78,7 +130,15 @@ func (ecb) Decrypt(ciphertext, key []byte) ([]byte, error) {
 
 type cbc struct{}
 
-// Encrypt CBC模式加密
+// Encrypt encrypts plaintext using CBC mode.
+//
+// Parameters:
+//   - plaintext: the data to encrypt
+//   - key: the encryption key
+//
+// Returns:
+//   - []byte: the encrypted ciphertext
+//   - error: any error encountered during encryption
 func (cbc) Encrypt(plaintext, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -96,7 +156,15 @@ func (cbc) Encrypt(plaintext, key []byte) ([]byte, error) {
 	return ciphertext, nil
 }
 
-// Decrypt CBC模式解密
+// Decrypt decrypts ciphertext using CBC mode.
+//
+// Parameters:
+//   - ciphertext: the data to decrypt
+//   - key: the decryption key
+//
+// Returns:
+//   - []byte: the decrypted plaintext
+//   - error: any error encountered during decryption
 func (cbc) Decrypt(ciphertext, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -120,12 +188,28 @@ func (cbc) Decrypt(ciphertext, key []byte) ([]byte, error) {
 
 type cfb struct{}
 
-// Encrypt CFB模式加密
+// Encrypt encrypts plaintext using CFB mode.
+//
+// Parameters:
+//   - plaintext: the data to encrypt
+//   - key: the encryption key
+//
+// Returns:
+//   - []byte: the encrypted ciphertext
+//   - error: any error encountered during encryption
 func (cfb) Encrypt(plaintext, key []byte) ([]byte, error) {
 	return baseStream{newStream: cipher.NewCFBEncrypter}.Encrypt(plaintext, key)
 }
 
-// Decrypt CFB模式解密
+// Decrypt decrypts ciphertext using CFB mode.
+//
+// Parameters:
+//   - ciphertext: the data to decrypt
+//   - key: the decryption key
+//
+// Returns:
+//   - []byte: the decrypted plaintext
+//   - error: any error encountered during decryption
 func (cfb) Decrypt(ciphertext, key []byte) ([]byte, error) {
 	return baseStream{newStream: cipher.NewCFBDecrypter}.Decrypt(ciphertext, key)
 }
@@ -133,24 +217,56 @@ func (cfb) Decrypt(ciphertext, key []byte) ([]byte, error) {
 type ofb struct {
 }
 
-// Encrypt OFB模式加密
+// Encrypt encrypts plaintext using OFB mode.
+//
+// Parameters:
+//   - plaintext: the data to encrypt
+//   - key: the encryption key
+//
+// Returns:
+//   - []byte: the encrypted ciphertext
+//   - error: any error encountered during encryption
 func (ofb) Encrypt(plaintext, key []byte) ([]byte, error) {
 	return baseStream{newStream: cipher.NewOFB}.Encrypt(plaintext, key)
 }
 
-// Decrypt OFB模式解密
+// Decrypt decrypts ciphertext using OFB mode.
+//
+// Parameters:
+//   - ciphertext: the data to decrypt
+//   - key: the decryption key
+//
+// Returns:
+//   - []byte: the decrypted plaintext
+//   - error: any error encountered during decryption
 func (ofb) Decrypt(ciphertext, key []byte) ([]byte, error) {
 	return baseStream{newStream: cipher.NewOFB}.Decrypt(ciphertext, key)
 }
 
 type ctr struct{}
 
-// Encrypt OFB模式加密
+// Encrypt encrypts plaintext using CTR mode.
+//
+// Parameters:
+//   - plaintext: the data to encrypt
+//   - key: the encryption key
+//
+// Returns:
+//   - []byte: the encrypted ciphertext
+//   - error: any error encountered during encryption
 func (ctr) Encrypt(plaintext, key []byte) ([]byte, error) {
 	return baseStream{newStream: cipher.NewCTR}.Encrypt(plaintext, key)
 }
 
-// Decrypt OFB模式解密
+// Decrypt decrypts ciphertext using CTR mode.
+//
+// Parameters:
+//   - ciphertext: the data to decrypt
+//   - key: the decryption key
+//
+// Returns:
+//   - []byte: the decrypted plaintext
+//   - error: any error encountered during decryption
 func (ctr) Decrypt(ciphertext, key []byte) ([]byte, error) {
 	return baseStream{newStream: cipher.NewCTR}.Decrypt(ciphertext, key)
 }
@@ -159,7 +275,15 @@ type baseStream struct {
 	newStream func(block cipher.Block, iv []byte) cipher.Stream
 }
 
-// Encrypt OFB模式加密
+// Encrypt encrypts plaintext using a stream cipher mode.
+//
+// Parameters:
+//   - plaintext: the data to encrypt
+//   - key: the encryption key
+//
+// Returns:
+//   - []byte: the encrypted ciphertext
+//   - error: any error encountered during encryption
 func (b baseStream) Encrypt(plaintext, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -175,7 +299,15 @@ func (b baseStream) Encrypt(plaintext, key []byte) ([]byte, error) {
 	return ciphertext, nil
 }
 
-// Decrypt OFB模式解密
+// Decrypt decrypts ciphertext using a stream cipher mode.
+//
+// Parameters:
+//   - ciphertext: the data to decrypt
+//   - key: the decryption key
+//
+// Returns:
+//   - []byte: the decrypted plaintext
+//   - error: any error encountered during decryption
 func (b baseStream) Decrypt(ciphertext, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {

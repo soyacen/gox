@@ -2,18 +2,17 @@ package distributed
 
 import "math/rand"
 
-// DeterministicSubSetting 根据给定的客户端ID生成后端列表的一个确定性子集。
-// 子集的选择基于客户端的ID和子集的大小，确保相同的客户端ID选择相同的子集。
+// DeterministicSubSetting generates a deterministic subset of backends based on the given client ID.
+// The subset selection is based on the client ID and subset size, ensuring the same client ID
+// always selects the same subset.
 //
-// 参数:
+// Parameters:
+//   - backends: the list of all backends.
+//   - clientID: the unique identifier of the client, used to determine which subset to select.
+//   - subsetSize: the size of each subset.
 //
-//	backends: 所有后端的列表。
-//	clientID: 客户端的唯一标识符，用于确定选择哪个子集。
-//	subsetSize: 每个子集的大小。
-//
-// 返回值:
-//
-//	包含选定子集后端的字符串切片。
+// Returns:
+//   - []string: a slice of strings containing the selected subset of backends.
 //
 // See: [google sre](https://landing.google.com/sre/book/chapters/load-balancing-datacenter.html)
 // See: [用 subsetting 限制连接池中的连接数量](https://xargin.com/limiting-conn-wih-subset)
@@ -55,7 +54,18 @@ func DeterministicSubSetting(backends []string, clientID, subsetSize int) []stri
 	return backends[start : start+subsetSize]
 }
 
-// https://colobu.com/2016/03/22/jump-consistent-hash/
+// JumpHash implements jump consistent hash.
+// It returns the bucket for the given key, optionally skipping dead buckets.
+//
+// Parameters:
+//   - key: the hash key.
+//   - buckets: the number of buckets.
+//   - checkAlive: optional function to check if a bucket is alive; if nil, all buckets are considered alive.
+//
+// Returns:
+//   - int: the selected bucket index.
+//
+// See: https://colobu.com/2016/03/22/jump-consistent-hash/
 func JumpHash(key uint64, buckets int, checkAlive func(int) bool) int {
 	var b, j int64 = -1, 0
 	if buckets <= 0 {

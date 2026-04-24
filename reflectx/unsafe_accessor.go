@@ -6,11 +6,21 @@ import (
 	"unsafe"
 )
 
+// Accessor provides unsafe field access to a struct using field names or tag values.
+// It uses unsafe.Pointer to access fields directly, including unexported fields.
 type Accessor struct {
 	fields  map[string]reflect.StructField
 	address unsafe.Pointer
 }
 
+// Get retrieves the value of a field by name as any.
+//
+// Parameters:
+//   - field: The name of the field to retrieve.
+//
+// Returns:
+//   - any: The value of the field.
+//   - error: An error if the field is not found.
 func (accessor *Accessor) Get(field string) (any, error) {
 	structField, ok := accessor.fields[field]
 	if !ok {
@@ -19,6 +29,14 @@ func (accessor *Accessor) Get(field string) (any, error) {
 	return accessor.get(structField)
 }
 
+// Set sets the value of a field by name.
+//
+// Parameters:
+//   - field: The name of the field to set.
+//   - val: The new value to assign.
+//
+// Returns:
+//   - error: An error if the field is not found.
 func (accessor *Accessor) Set(field string, val any) error {
 	structField, ok := accessor.fields[field]
 	if !ok {
@@ -86,6 +104,14 @@ func extractFieldsByTag(objStructValue reflect.Value, key string) (map[string]re
 	return fields, nil
 }
 
+// FieldAccessorOf creates an Accessor for a struct using field names as keys.
+//
+// Parameters:
+//   - objValue: A pointer reflect.Value to the struct.
+//
+// Returns:
+//   - *Accessor: An Accessor that can read and write fields by name.
+//   - error: An error if objValue is invalid, not a pointer, or not a struct.
 func FieldAccessorOf(objValue reflect.Value) (*Accessor, error) {
 	objStructValue, err := checkValue(objValue)
 	if err != nil {
@@ -96,6 +122,15 @@ func FieldAccessorOf(objValue reflect.Value) (*Accessor, error) {
 	return &Accessor{fields: fields, address: address}, nil
 }
 
+// TagAccessorOf creates an Accessor for a struct using tag values as keys.
+//
+// Parameters:
+//   - objValue: A pointer reflect.Value to the struct.
+//   - key: The tag key to use for field lookup.
+//
+// Returns:
+//   - *Accessor: An Accessor that can read and write fields by tag value.
+//   - error: An error if objValue is invalid, not a pointer, not a struct, or if tag values are duplicated.
 func TagAccessorOf(objValue reflect.Value, key string) (*Accessor, error) {
 	objStructValue, err := checkValue(objValue)
 	if err != nil {
@@ -110,6 +145,15 @@ func TagAccessorOf(objValue reflect.Value, key string) (*Accessor, error) {
 	return &Accessor{fields: fields, address: address}, nil
 }
 
+// GetByAccessor retrieves the typed value of a field from an Accessor.
+//
+// Parameters:
+//   - accessor: The Accessor to read from.
+//   - field: The name of the field to retrieve.
+//
+// Returns:
+//   - T: The typed value of the field.
+//   - error: An error if the field is not found.
 func GetByAccessor[T any](accessor *Accessor, field string) (T, error) {
 	var res T
 	structField, ok := accessor.fields[field]
@@ -120,6 +164,15 @@ func GetByAccessor[T any](accessor *Accessor, field string) (T, error) {
 	return res, nil
 }
 
+// SetByAccessor sets the typed value of a field on an Accessor.
+//
+// Parameters:
+//   - accessor: The Accessor to write to.
+//   - field: The name of the field to set.
+//   - val: The new typed value to assign.
+//
+// Returns:
+//   - error: An error if the field is not found.
 func SetByAccessor[T any](accessor *Accessor, field string, val T) error {
 	structField, ok := accessor.fields[field]
 	if !ok {

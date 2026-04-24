@@ -1,6 +1,12 @@
 package stringx
 
 // IsValidNumber reports whether s is a valid number.
+//
+// Parameters:
+//   - s: the string to check.
+//
+// Returns:
+//   - bool: true if s is a valid number.
 func IsValidNumber(s string) bool {
 	if s == "" {
 		return false

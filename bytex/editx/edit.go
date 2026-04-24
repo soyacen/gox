@@ -10,20 +10,20 @@ import (
 	"sort"
 )
 
-// A Buffer is a queue of edits to apply to a given byte slice.
+// Buffer accumulates text modifications to apply to a byte slice.
 type Buffer struct {
 	old []byte
 	q   edits
 }
 
-// An edit records a single text modification: change the bytes in [start,end) to new.
+// edit records a single text modification.
 type edit struct {
 	start int
 	end   int
 	new   string
 }
 
-// An edits is a list of edits that is sortable by start offset, breaking ties by end offset.
+// edits is a sortable list of edits by start offset, breaking ties by end offset.
 type edits []edit
 
 func (x edits) Len() int      { return len(x) }
@@ -35,14 +35,25 @@ func (x edits) Less(i, j int) bool {
 	return x[i].end < x[j].end
 }
 
-// NewBuffer returns a new buffer to accumulate changes to an initial data slice.
-// The returned buffer maintains a reference to the data, so the caller must ensure
-// the data is not modified until after the Buffer is done being used.
+// NewBuffer creates a new Buffer to accumulate changes to a byte slice.
+//
+// The buffer maintains a reference to the data; do not modify old until
+// after all edits have been applied.
+//
+// Parameters:
+//   - old: initial byte slice to edit
+//
+// Returns:
+//   - *Buffer: new edit buffer
 func NewBuffer(old []byte) *Buffer {
 	return &Buffer{old: old}
 }
 
-// Insert inserts the new string at old[pos:pos].
+// Insert inserts a string at the specified position.
+//
+// Parameters:
+//   - pos: byte offset where the text should be inserted
+//   - new: string to insert
 func (b *Buffer) Insert(pos int, new string) {
 	if pos < 0 || pos > len(b.old) {
 		panic("invalid edit position")
@@ -50,7 +61,11 @@ func (b *Buffer) Insert(pos int, new string) {
 	b.q = append(b.q, edit{pos, pos, new})
 }
 
-// Delete deletes the text old[start:end].
+// Delete removes the text in the range [start, end).
+//
+// Parameters:
+//   - start: byte offset of the first byte to delete
+//   - end: byte offset after the last byte to delete
 func (b *Buffer) Delete(start, end int) {
 	if end < start || start < 0 || end > len(b.old) {
 		panic("invalid edit position")
@@ -58,7 +73,12 @@ func (b *Buffer) Delete(start, end int) {
 	b.q = append(b.q, edit{start, end, ""})
 }
 
-// Replace replaces old[start:end] with new.
+// Replace replaces the text in the range [start, end) with new.
+//
+// Parameters:
+//   - start: byte offset of the first byte to replace
+//   - end: byte offset after the last byte to replace
+//   - new: replacement string
 func (b *Buffer) Replace(start, end int, new string) {
 	if end < start || start < 0 || end > len(b.old) {
 		panic("invalid edit position")
@@ -66,8 +86,10 @@ func (b *Buffer) Replace(start, end int, new string) {
 	b.q = append(b.q, edit{start, end, new})
 }
 
-// Bytes returns a new byte slice containing the original data
-// with the queued edits applied.
+// Bytes applies all queued edits and returns the modified data.
+//
+// Returns:
+//   - []byte: new byte slice with all edits applied
 func (b *Buffer) Bytes() []byte {
 	// Sort edits by starting position and then by ending position.
 	// Breaking ties by ending position allows insertions at point x
@@ -89,8 +111,10 @@ func (b *Buffer) Bytes() []byte {
 	return new
 }
 
-// String returns a string containing the original data
-// with the queued edits applied.
+// String applies all queued edits and returns the modified data as a string.
+//
+// Returns:
+//   - string: result with all edits applied
 func (b *Buffer) String() string {
 	return string(b.Bytes())
 }

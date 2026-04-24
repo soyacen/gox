@@ -116,7 +116,7 @@ func (r *defaultStrategy) Exec(ctx context.Context, cmd func(ctx context.Context
 	return cmd(ctx, attempt)
 }
 
-// MaxAttempts creates a new defaultStrategy instance with the specified maximum retry attempts.
+// MaxAttempts creates a new retry strategy with the specified maximum number of attempts.
 //
 // Parameters:
 //   - maxAttempts: The maximum number of retry attempts (must be > 0)

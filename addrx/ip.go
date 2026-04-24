@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-// Addrs returns a list of unicast interface addresses for all interfaces.
+// Addrs returns a list of unicast interface addresses for all network interfaces.
 //
 // Returns:
 //   - []net.Addr: List of network interface addresses
@@ -45,7 +45,7 @@ func Addrs() ([]net.Addr, error) {
 	return res, nil
 }
 
-// IPs returns a list of IPs for all interfaces.
+// IPs returns a list of IP addresses for all network interfaces.
 //
 // Returns:
 //   - []net.IP: List of IP addresses
@@ -79,7 +79,7 @@ func IPs() ([]net.IP, error) {
 	return res, nil
 }
 
-// GlobalUnicastIPs returns a list of global unicast IPs for all interfaces.
+// GlobalUnicastIPs returns a list of global unicast IP addresses for all network interfaces.
 //
 // Returns:
 //   - []net.IP: List of global unicast IP addresses
@@ -103,6 +103,16 @@ func GlobalUnicastIPs() ([]net.IP, error) {
 	return nil, errors.Join(errs...)
 }
 
+// GlobalUnicastAddr extracts the global unicast IP and port from a network address.
+// If the address is not global unicast, it attempts to find one from all interfaces.
+//
+// Parameters:
+//   - address: The network address to extract from
+//
+// Returns:
+//   - net.IP: The global unicast IP
+//   - int: The port number
+//   - error: Error if extraction fails
 func GlobalUnicastAddr(address net.Addr) (net.IP, int, error) {
 	ip, port, err := SplitHostPort(address)
 	if err != nil {
@@ -121,7 +131,8 @@ func GlobalUnicastAddr(address net.Addr) (net.IP, int, error) {
 	return ips[0], port, err
 }
 
-// SplitHostPort splits a network address of the form net.Addr into IP and port components.
+// SplitHostPort splits a network address into IP and port components.
+// It handles various address types including IPAddr, IPNet, TCPAddr, and UDPAddr.
 //
 // Parameters:
 //   - addr: Network address to split
@@ -150,7 +161,7 @@ func SplitHostPort(addr net.Addr) (net.IP, int, error) {
 	}
 }
 
-// IsGlobalUnicastIP checks whether the IP is a global unicast IP.
+// IsGlobalUnicastIP checks whether the IP is a global unicast IP address.
 // A global unicast IP is routable on the internet and not a private, loopback, or multicast address.
 //
 // Parameters:
@@ -206,7 +217,11 @@ func IsGlobalUnicastIP(ip net.IP) bool {
 	return ip.IsGlobalUnicast()
 }
 
-// GlobalUnicastIPString get a global unicast IP address string
+// GlobalUnicastIPString returns a global unicast IP address as a string.
+//
+// Returns:
+//   - string: The global unicast IP address
+//   - error: Error if no global unicast IP is found
 func GlobalUnicastIPString() (string, error) {
 	ips, err := GlobalUnicastIPs()
 	if err != nil {
@@ -215,7 +230,14 @@ func GlobalUnicastIPString() (string, error) {
 	return ips[0].String(), nil
 }
 
-// InterfaceIPs get public IP addresses by interface name
+// InterfaceIPs returns public IP addresses for the specified network interface name.
+//
+// Parameters:
+//   - name: The name of the network interface
+//
+// Returns:
+//   - []net.IP: List of IP addresses for the interface
+//   - error: Error if the interface is not found
 func InterfaceIPs(name string) ([]net.IP, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
@@ -244,7 +266,14 @@ func InterfaceIPs(name string) ([]net.IP, error) {
 	return ips, nil
 }
 
-// InterfaceIPv4 get a public IPv4 address
+// InterfaceIPv4 returns public IPv4 addresses for the specified network interface name.
+//
+// Parameters:
+//   - name: The name of the network interface
+//
+// Returns:
+//   - []net.IP: List of IPv4 addresses for the interface
+//   - error: Error if the interface is not found or has no IPv4 addresses
 func InterfaceIPv4(name string) ([]net.IP, error) {
 	ips, err := InterfaceIPs(name)
 	if err != nil {
@@ -261,13 +290,25 @@ func InterfaceIPv4(name string) ([]net.IP, error) {
 	return r, nil
 }
 
-// IsLocalIPAddr 检测 IP 地址字符串是否是内网地址
+// IsLocalIPAddr checks whether the given IP address string is a local (private) address.
+//
+// Parameters:
+//   - ip: The IP address string to check
+//
+// Returns:
+//   - bool: True if the IP is a local address, false otherwise
 func IsLocalIPAddr(ip string) bool {
 	return IsLocalIP(net.ParseIP(ip))
 }
 
-// IsLocalIP 检测 IP 地址是否是内网地址
-// 通过直接对比ip段范围效率更高
+// IsLocalIP checks whether the given IP address is a local (private) address.
+// It checks for loopback, private, and link-local addresses.
+//
+// Parameters:
+//   - ip: The IP address to check
+//
+// Returns:
+//   - bool: True if the IP is a local address, false otherwise
 func IsLocalIP(ip net.IP) bool {
 	if ip.IsLoopback() {
 		return true
@@ -283,8 +324,15 @@ func IsLocalIP(ip net.IP) bool {
 		(ip4[0] == 192 && ip4[1] == 168) // 192.168.0.0/16
 }
 
-// ClientIP 尽最大努力实现获取客户端 IP 的算法。
-// 解析 X-Real-IP 和 X-Forwarded-For 以便于反向代理（nginx 或 haproxy）可以正常工作。
+// ClientIP returns the client IP address from the HTTP request.
+// It checks X-Forwarded-For and X-Real-IP headers first, then falls back to RemoteAddr.
+// This supports reverse proxies such as nginx or haproxy.
+//
+// Parameters:
+//   - r: The HTTP request
+//
+// Returns:
+//   - string: The client IP address
 func ClientIP(r *http.Request) string {
 	ip := strings.TrimSpace(strings.Split(r.Header.Get("X-Forwarded-For"), ",")[0])
 	if ip != "" {
@@ -303,8 +351,9 @@ func ClientIP(r *http.Request) string {
 	return ""
 }
 
-// ClientPublicIP 尽最大努力实现获取客户端公网 IP 的算法。
-// 解析 X-Real-IP 和 X-Forwarded-For 以便于反向代理（nginx 或 haproxy）可以正常工作。
+// ClientPublicIP returns the client's public IP address from the HTTP request.
+// It checks X-Forwarded-For and X-Real-IP headers, filtering out local addresses.
+// This supports reverse proxies such as nginx or haproxy.
 func ClientPublicIP(r *http.Request) string {
 	var ip string
 	for _, ip = range strings.Split(r.Header.Get("X-Forwarded-For"), ",") {
@@ -324,13 +373,27 @@ func ClientPublicIP(r *http.Request) string {
 	return ""
 }
 
-// RemoteIP 通过 RemoteAddr 获取 IP 地址， 只是一个快速解析方法。
+// RemoteIP returns the IP address from the request's RemoteAddr.
+// It performs a quick parse of the remote address.
+//
+// Parameters:
+//   - r: The HTTP request
+//
+// Returns:
+//   - string: The remote IP address
 func RemoteIP(r *http.Request) string {
 	ip, _, _ := net.SplitHostPort(r.RemoteAddr)
 	return ip
 }
 
-// IPString2Long 把ip字符串转为数值
+// IPString2Long converts an IPv4 string to a numeric value.
+//
+// Parameters:
+//   - ip: The IPv4 address string
+//
+// Returns:
+//   - uint: The numeric representation of the IP
+//   - error: Error if the IP format is invalid
 func IPString2Long(ip string) (uint, error) {
 	b := net.ParseIP(ip).To4()
 	if b == nil {
@@ -340,7 +403,14 @@ func IPString2Long(ip string) (uint, error) {
 	return uint(b[3]) | uint(b[2])<<8 | uint(b[1])<<16 | uint(b[0])<<24, nil
 }
 
-// Long2IPString 把数值转为ip字符串
+// Long2IPString converts a numeric value to an IPv4 string.
+//
+// Parameters:
+//   - i: The numeric value to convert
+//
+// Returns:
+//   - string: The IPv4 address string
+//   - error: Error if the value exceeds the IPv4 range
 func Long2IPString(i uint) (string, error) {
 	if i > math.MaxUint32 {
 		return "", errors.New("beyond the scope of ipv4")
@@ -355,7 +425,14 @@ func Long2IPString(i uint) (string, error) {
 	return ip.String(), nil
 }
 
-// IP2Long 把net.IP转为数值
+// IP2Long converts a net.IP to a numeric value.
+//
+// Parameters:
+//   - ip: The IP address to convert
+//
+// Returns:
+//   - uint: The numeric representation of the IP
+//   - error: Error if the IP format is invalid
 func IP2Long(ip net.IP) (uint, error) {
 	b := ip.To4()
 	if b == nil {
@@ -365,7 +442,14 @@ func IP2Long(ip net.IP) (uint, error) {
 	return uint(b[3]) | uint(b[2])<<8 | uint(b[1])<<16 | uint(b[0])<<24, nil
 }
 
-// Long2IP 把数值转为net.IP
+// Long2IP converts a numeric value to a net.IP.
+//
+// Parameters:
+//   - i: The numeric value to convert
+//
+// Returns:
+//   - net.IP: The IP address
+//   - error: Error if the value exceeds the IPv4 range
 func Long2IP(i uint) (net.IP, error) {
 	if i > math.MaxUint32 {
 		return nil, errors.New("beyond the scope of ipv4")

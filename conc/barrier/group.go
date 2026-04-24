@@ -6,6 +6,7 @@ import (
 )
 
 // Group implements a reusable barrier similar to Java's CyclicBarrier.
+//
 // Create with NewGroup(parties, action). Each of the parties calls
 // Wait(ctx). When the last party arrives, optional action is executed
 // by that goroutine and all waiters are released. Wait supports context
@@ -26,10 +27,20 @@ type Group struct {
 // BrokenBarrierError indicates the barrier is broken.
 type BrokenBarrierError struct{}
 
+// Error returns the error message for BrokenBarrierError.
+//
+// Returns:
+//   - string: the error message "barrier: barrier is broken".
 func (e *BrokenBarrierError) Error() string { return "barrier: barrier is broken" }
 
 // NewGroup creates a new Group that waits for parties goroutines.
-// barrierAction is executed by the last arriving goroutine. parties must be > 0.
+//
+// Parameters:
+//   - parties: the number of parties that must call Wait before the barrier trips. Must be > 0.
+//   - barrierAction: the action to execute when the barrier trips. Can be nil.
+//
+// Returns:
+//   - *Group: the created Group.
 func NewGroup(parties int, barrierAction func()) *Group {
 	if parties <= 0 {
 		panic("barrier: parties must be > 0")
@@ -46,6 +57,12 @@ func NewGroup(parties int, barrierAction func()) *Group {
 // Wait blocks until all parties have called Wait or until ctx is done.
 // If ctx is canceled before release, the barrier is broken and all waiters
 // receive *BrokenBarrierError (the caller that canceled receives ctx.Err()).
+//
+// Parameters:
+//   - ctx: the context for cancellation.
+//
+// Returns:
+//   - error: nil if released normally, *BrokenBarrierError if barrier is broken, or ctx.Err() if canceled.
 func (g *Group) Wait(ctx context.Context) error {
 	g.mutex.Lock()
 	// If already broken, return immediately
@@ -122,6 +139,12 @@ func (g *Group) Wait(ctx context.Context) error {
 
 // Reset breaks the barrier and starts a fresh generation.
 // All waiters in the current generation will observe a broken barrier.
+//
+// Parameters:
+//   - none.
+//
+// Returns:
+//   - none.
 func (g *Group) Reset() {
 	g.mutex.Lock()
 	defer g.mutex.Unlock()
@@ -138,6 +161,9 @@ func (g *Group) nextGeneration() {
 }
 
 // GetNumberWaiting returns how many goroutines are currently waiting.
+//
+// Returns:
+//   - int: the number of waiting goroutines. Returns 0 if the barrier is broken.
 func (g *Group) GetNumberWaiting() int {
 	g.mutex.Lock()
 	defer g.mutex.Unlock()
@@ -148,6 +174,9 @@ func (g *Group) GetNumberWaiting() int {
 }
 
 // IsBroken returns whether the barrier is in a broken state.
+//
+// Returns:
+//   - bool: true if the barrier is broken, false otherwise.
 func (g *Group) IsBroken() bool {
 	g.mutex.Lock()
 	defer g.mutex.Unlock()
@@ -155,4 +184,7 @@ func (g *Group) IsBroken() bool {
 }
 
 // GetParties returns the configured number of parties.
+//
+// Returns:
+//   - int: the number of parties.
 func (g *Group) GetParties() int { return g.parties }

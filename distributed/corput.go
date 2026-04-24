@@ -1,16 +1,14 @@
 package distributed
 
-// VanDerCorputSequence 生成范德科鲁普序列。
-// 该序列是一种低差异序列，适用于在均匀分布中生成数值。
+// VanDerCorputSequence generates a van der Corput sequence.
+// The sequence is a low-discrepancy sequence useful for generating evenly distributed numbers.
 //
-// 参数:
+// Parameters:
+//   - n: the position in the sequence, starting from 0.
+//   - base: the radix of the sequence, determining its fractal nature.
 //
-//	n: 序列中的位置，从0开始。
-//	base: 序列的基数，用于确定序列的分形性质。
-//
-// 返回值:
-//
-//	生成的范德科鲁普序列的浮点数值。
+// Returns:
+//   - float64: the generated van der Corput sequence value.
 func VanDerCorputSequence(n int, base int) float64 {
 	// 初始化q为0，用于累加每个位的倒数权重。
 	q := 0.0
@@ -28,18 +26,18 @@ func VanDerCorputSequence(n int, base int) float64 {
 	return q
 }
 
-// BinaryVanDerCorputSequence 生成二进制范德科鲁普序列。
-// 该函数是范德科鲁普序列的一个特例，针对基数为2的情况。
-// 范德科鲁普序列是一种低差异序列，常用于随机数生成和蒙特卡洛模拟。
-// 在二进制情况下，这种序列特别适用于需要均匀分布的二进制位场景。
+// BinaryVanDerCorputSequence generates a binary van der Corput sequence.
+// This function is a special case of the van der Corput sequence for base 2.
+// The van der Corput sequence is a low-discrepancy sequence commonly used in
+// random number generation and Monte Carlo simulations.
+// In the binary case, this sequence is especially suitable for scenarios
+// requiring evenly distributed binary digits.
 //
-// 参数:
+// Parameters:
+//   - n: the index of the nth number in the sequence.
 //
-//	n - 序列中的第n个数的索引。
-//
-// 返回值:
-//
-//	生成的范德科鲁普序列中第n个数的值。
+// Returns:
+//   - float64: the value of the nth van der Corput sequence number.
 func BinaryVanDerCorputSequence(n int) float64 {
 	return VanDerCorputSequence(n, 2)
 }

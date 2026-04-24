@@ -18,34 +18,20 @@ import (
 // It is typically a pair of line indexes.
 type pair struct{ x, y int }
 
-// Diff returns an anchored diff of the two texts old and new
-// in the “unified diff” format. If old and new are identical,
-// Diff returns a nil slice (no output).
+// Diff returns an anchored diff of two texts in unified diff format.
 //
-// Unix diff implementations typically look for a diff with
-// the smallest number of lines inserted and removed,
-// which can in the worst case take time quadratic in the
-// number of lines in the texts. As a result, many implementations
-// either can be made to run for a long time or cut off the search
-// after a predetermined amount of work.
+// If old and new are identical, Diff returns nil.
+// The algorithm finds unique lines that anchor matching regions,
+// running in O(n log n) time instead of the standard O(n²).
 //
-// In contrast, this implementation looks for a diff with the
-// smallest number of “unique” lines inserted and removed,
-// where unique means a line that appears just once in both old and new.
-// We call this an “anchored diff” because the unique lines anchor
-// the chosen matching regions. An anchored diff is usually clearer
-// than a standard diff, because the algorithm does not try to
-// reuse unrelated blank lines or closing braces.
-// The algorithm also guarantees to run in O(n log n) time
-// instead of the standard O(n²) time.
+// Parameters:
+//   - oldName: name for the old file in diff header
+//   - old: content of the old file
+//   - newName: name for the new file in diff header
+//   - new: content of the new file
 //
-// Some systems call this approach a “patience diff,” named for
-// the “patience sorting” algorithm, itself named for a solitaire card game.
-// We avoid that name for two reasons. First, the name has been used
-// for a few different variants of the algorithm, so it is imprecise.
-// Second, the name is frequently interpreted as meaning that you have
-// to wait longer (to be patient) for the diff, meaning that it is a slower algorithm,
-// when in fact the algorithm is faster than the standard one.
+// Returns:
+//   - []byte: unified diff output, or nil if files are identical
 func Diff(oldName string, old []byte, newName string, new []byte) []byte {
 	if bytes.Equal(old, new) {
 		return nil
@@ -166,9 +152,16 @@ func Diff(oldName string, old []byte, newName string, new []byte) []byte {
 	return out.Bytes()
 }
 
-// lines returns the lines in the file x, including newlines.
-// If the file does not end in a newline, one is supplied
-// along with a warning about the missing newline.
+// lines splits a byte slice into lines, including trailing newlines.
+//
+// If the file does not end with a newline, it appends one and adds
+// the standard "\ No newline at end of file" marker.
+//
+// Parameters:
+//   - x: byte slice to split into lines
+//
+// Returns:
+//   - []string: lines including newlines
 func lines(x []byte) []string {
 	l := strings.SplitAfter(string(x), "\n")
 	if l[len(l)-1] == "" {
@@ -181,14 +174,18 @@ func lines(x []byte) []string {
 	return l
 }
 
-// tgs returns the pairs of indexes of the longest common subsequence
-// of unique lines in x and y, where a unique line is one that appears
-// once in x and once in y.
+// tgs returns pairs of indexes for the longest common subsequence
+// of unique lines between x and y.
 //
-// The longest common subsequence algorithm is as described in
-// Thomas G. Szymanski, “A Special Case of the Maximal Common
-// Subsequence Problem,” Princeton TR #170 (January 1975),
-// available at https://research.swtch.com/tgs170.pdf.
+// A unique line appears exactly once in both inputs.
+// Uses Algorithm A from Szymanski (1975) for the LCS computation.
+//
+// Parameters:
+//   - x: first slice of strings
+//   - y: second slice of strings
+//
+// Returns:
+//   - []pair: pairs of matching line indexes, including sentinel pairs
 func tgs(x, y []string) []pair {
 	// Count the number of times each string appears in a and b.
 	// We only care about 0, 1, many, counted as 0, -1, -2

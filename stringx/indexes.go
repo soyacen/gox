@@ -4,6 +4,14 @@ import (
 	"strings"
 )
 
+// Indices returns all starting indices of substr in str.
+//
+// Parameters:
+//   - str: the source string.
+//   - substr: the substring to find.
+//
+// Returns:
+//   - []int: all starting indices of substr.
 func Indices(str, substr string) []int {
 	s := str
 	var indices []int

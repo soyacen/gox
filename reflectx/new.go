@@ -4,6 +4,11 @@ import (
 	"reflect"
 )
 
+// New creates a new zero value of type T, initializing maps, slices, channels,
+// and pointers recursively.
+//
+// Returns:
+//   - T: A new zero value of type T with initialized complex types.
 func New[T any]() T {
 	var t T
 	value := reflectNew(reflect.TypeOf(t)).Interface()

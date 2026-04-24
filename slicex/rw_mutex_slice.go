@@ -5,23 +5,39 @@ import (
 	"sync"
 )
 
-// RWMutexSlice 是一个线程安全的切片。
+// RWMutexSlice is a thread-safe slice protected by a read-write mutex.
 type RWMutexSlice[S ~[]E, E any] struct {
-	// mu 是一个读写锁，用于保护切片的并发访问。
-	mu sync.RWMutex
-	// raw 是一个切片，存储切片中的元素。
+	mu  sync.RWMutex
 	raw S
 }
 
+// MakeSlice creates a new RWMutexSlice with the given length and capacity.
+//
+// Parameters:
+//   - length: the initial length.
+//   - capacity: the initial capacity.
+//
+// Returns:
+//   - *RWMutexSlice[S, E]: the newly created thread-safe slice.
 func MakeSlice[S ~[]E, E any](length, capacity int) *RWMutexSlice[S, E] {
 	return &RWMutexSlice[S, E]{raw: make(S, length, capacity)}
 }
 
+// WrapSlice wraps an existing slice in a RWMutexSlice.
+//
+// Parameters:
+//   - raw: the slice to wrap.
+//
+// Returns:
+//   - *RWMutexSlice[S, E]: the wrapped thread-safe slice.
 func WrapSlice[S ~[]E, E any](raw []E) *RWMutexSlice[S, E] {
 	return &RWMutexSlice[S, E]{raw: raw}
 }
 
-// Range 遍历切片中的每个元素，并调用 f 函数。如果 f 返回 false，则停止遍历。
+// Range iterates over each element and calls f. If f returns false, iteration stops.
+//
+// Parameters:
+//   - f: a function receiving the index and element; returning false stops iteration.
 func (s *RWMutexSlice[S, E]) Range(f func(index int, elem E) bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -32,7 +48,13 @@ func (s *RWMutexSlice[S, E]) Range(f func(index int, elem E) bool) {
 	}
 }
 
-// Append 将一个或多个元素追加到切片的末尾。
+// Append adds one or more elements to the end of the slice.
+//
+// Parameters:
+//   - elems: the elements to append.
+//
+// Returns:
+//   - *RWMutexSlice[S, E]: the receiver for chaining.
 func (s *RWMutexSlice[S, E]) Append(elems ...E) *RWMutexSlice[S, E] {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -40,7 +62,13 @@ func (s *RWMutexSlice[S, E]) Append(elems ...E) *RWMutexSlice[S, E] {
 	return s
 }
 
-// Prepend 将一个或多个元素插入到切片的开头。
+// Prepend inserts one or more elements at the beginning of the slice.
+//
+// Parameters:
+//   - elems: the elements to prepend.
+//
+// Returns:
+//   - *RWMutexSlice[S, E]: the receiver for chaining.
 func (s *RWMutexSlice[S, E]) Prepend(elems ...E) *RWMutexSlice[S, E] {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -51,26 +79,41 @@ func (s *RWMutexSlice[S, E]) Prepend(elems ...E) *RWMutexSlice[S, E] {
 	return s
 }
 
-// Slice 返回一个新的切片，包含原切片中从 low 到 high 的元素。如果提供了 max，则返回的切片的容量为 max。
+// Slice returns a new RWMutexSlice containing elements from low to high.
+// If max is provided, the capacity of the returned slice is set to max.
+//
+// Parameters:
+//   - low: the start index (inclusive).
+//   - high: the end index (exclusive).
+//   - max: optional capacity limit.
+//
+// Returns:
+//   - *RWMutexSlice[S, E]: the sub-slice.
 func (s *RWMutexSlice[S, E]) Slice(low int, high int, max ...int) *RWMutexSlice[S, E] {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	if low < 0 || high > len(s.raw) || low > high {
-		panic("slicex: raw bounds out of range")
+		panic("slicex: slice bounds out of range")
 	}
 	if len(max) == 0 {
 		return WrapSlice[S, E](slices.Clone(s.raw[low:high]))
 	}
 	if len(max) == 1 {
 		if max[0] < high || max[0] > cap(s.raw) {
-			panic("slicex: raw capacity out of range")
+			panic("slicex: slice capacity out of range")
 		}
 		return WrapSlice[S, E](slices.Clone(s.raw[low:high:max[0]]))
 	}
 	panic("slicex: invalid argument")
 }
 
-// Index 返回切片中指定索引位置的元素。
+// Index returns the element at the specified index.
+//
+// Parameters:
+//   - x: the index to access.
+//
+// Returns:
+//   - E: the element at the index.
 func (s *RWMutexSlice[S, E]) Index(x int) E {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -80,28 +123,40 @@ func (s *RWMutexSlice[S, E]) Index(x int) E {
 	return s.raw[x]
 }
 
-// Len 返回切片的长度。
+// Len returns the length of the slice.
+//
+// Returns:
+//   - int: the number of elements.
 func (s *RWMutexSlice[S, E]) Len() int {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return len(s.raw)
 }
 
-// Cap 返回切片的容量。
+// Cap returns the capacity of the slice.
+//
+// Returns:
+//   - int: the capacity.
 func (s *RWMutexSlice[S, E]) Cap() int {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return cap(s.raw)
 }
 
-// Unwrap 返回一个新的切片，包含原切片中的所有元素。
+// Unwrap returns a copy of the underlying slice.
+//
+// Returns:
+//   - []E: a cloned copy of all elements.
 func (s *RWMutexSlice[S, E]) Unwrap() []E {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return slices.Clone(s.raw)
 }
 
-// ClearAndUnwrap 清空切片并返回原切片。
+// ClearAndUnwrap clears the slice and returns a copy of the previous contents.
+//
+// Returns:
+//   - []E: a cloned copy of the elements before clearing.
 func (s *RWMutexSlice[S, E]) ClearAndUnwrap() []E {
 	s.mu.Lock()
 	defer s.mu.Unlock()

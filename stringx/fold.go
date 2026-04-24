@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	caseMask     = ^byte(0x20) // Mask to ignore case in ASCII.
+	caseMask     = ^byte(0x20)
 	kelvin       = '\u212a'
 	smallLongEss = '\u017f'
 )
@@ -20,10 +20,10 @@ const (
 // FoldFunc returns one of four different case folding equivalence
 // functions, from most general (and slow) to fastest:
 //
-// 1) bytes.EqualFold, if the key s contains any non-ASCII UTF-8
-// 2) EqualFoldRight, if s contains special folding ASCII ('k', 'K', 's', 'S')
-// 3) AsciiEqualFold, no special, but includes non-letters (including _)
-// 4) SimpleLetterEqualFold, no specials, no non-letters.
+//  1. bytes.EqualFold, if the key s contains any non-ASCII UTF-8
+//  2. EqualFoldRight, if s contains special folding ASCII ('k', 'K', 's', 'S')
+//  3. AsciiEqualFold, no special, but includes non-letters (including _)
+//  4. SimpleLetterEqualFold, no specials, no non-letters.
 //
 // The letters S and K are special because they map to 3 runes, not just 2:
 //   - S maps to s and to U+017F 'ſ' Latin small letter long s
@@ -33,9 +33,15 @@ const (
 //
 // The returned function is specialized for matching against s and
 // should only be given s. It's not curried for performance reasons.
+//
+// Parameters:
+//   - s: the byte slice to match against.
+//
+// Returns:
+//   - func(s, t []byte) bool: a case folding function.
 func FoldFunc(s []byte) func(s, t []byte) bool {
 	nonLetter := false
-	special := false // special letter
+	special := false
 	for _, b := range s {
 		if b >= utf8.RuneSelf {
 			return bytes.EqualFold
@@ -44,7 +50,6 @@ func FoldFunc(s []byte) func(s, t []byte) bool {
 		if upper < 'A' || upper > 'Z' {
 			nonLetter = true
 		} else if upper == 'K' || upper == 'S' {
-			// See above for why these letters are special.
 			special = true
 		}
 	}
@@ -61,6 +66,13 @@ func FoldFunc(s []byte) func(s, t []byte) bool {
 // known to be all ASCII (including punctuation), but contains an 's',
 // 'S', 'k', or 'K', requiring a Unicode fold on the bytes in t.
 // See comments on FoldFunc.
+//
+// Parameters:
+//   - s: the source bytes.
+//   - t: the target bytes.
+//
+// Returns:
+//   - bool: true if the strings are equal under folding.
 func EqualFoldRight(s, t []byte) bool {
 	for _, sb := range s {
 		if len(t) == 0 {
@@ -81,8 +93,6 @@ func EqualFoldRight(s, t []byte) bool {
 			t = t[1:]
 			continue
 		}
-		// sb is ASCII and t is not. t must be either kelvin
-		// sign or long s; sb must be s, S, k, or K.
 		tr, size := utf8.DecodeRune(t)
 		switch sb {
 		case 's', 'S':
@@ -97,7 +107,6 @@ func EqualFoldRight(s, t []byte) bool {
 			return false
 		}
 		t = t[size:]
-
 	}
 	return len(t) == 0
 }
@@ -106,6 +115,13 @@ func EqualFoldRight(s, t []byte) bool {
 // s is all ASCII (but may contain non-letters) and contains no
 // special-folding letters.
 // See comments on FoldFunc.
+//
+// Parameters:
+//   - s: the source bytes.
+//   - t: the target bytes.
+//
+// Returns:
+//   - bool: true if the strings are equal under folding.
 func AsciiEqualFold(s, t []byte) bool {
 	if len(s) != len(t) {
 		return false
@@ -130,6 +146,13 @@ func AsciiEqualFold(s, t []byte) bool {
 // use when s is all ASCII letters (no underscores, etc) and also
 // doesn't contain 'k', 'K', 's', or 'S'.
 // See comments on FoldFunc.
+//
+// Parameters:
+//   - s: the source bytes.
+//   - t: the target bytes.
+//
+// Returns:
+//   - bool: true if the strings are equal under folding.
 func SimpleLetterEqualFold(s, t []byte) bool {
 	if len(s) != len(t) {
 		return false

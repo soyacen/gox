@@ -22,18 +22,15 @@ const (
 //   - m: Pointer to the sync.Mutex to lock
 //
 // Returns:
-//   - bool: True if lock acquired, false if already locked
+//   - bool: true if lock acquired, false if already locked
 func TryLock(m *sync.Mutex) bool {
-	// 如果能成功抢到锁
 	if atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(m)), 0, mutexLocked) {
 		return true
 	}
-	// 如果处于唤醒、加锁或者饥饿状态，这次请求就不参与竞争了，返回false
 	oldState := atomic.LoadInt32((*int32)(unsafe.Pointer(m)))
 	if oldState&(mutexLocked|mutexStarving|mutexWoken) != 0 {
 		return false
 	}
-	// 尝试在竞争的状态下请求锁
 	newState := oldState | mutexLocked
 	return atomic.CompareAndSwapInt32((*int32)(unsafe.Pointer(m)), oldState, newState)
 }
@@ -44,11 +41,10 @@ func TryLock(m *sync.Mutex) bool {
 //   - m: Pointer to the sync.Mutex to inspect
 //
 // Returns:
-//   - int: Number of waiting goroutines
+//   - int: number of waiting goroutines
 func WaiterCount(m *sync.Mutex) int {
-	// 获取state字段的值
 	v := atomic.LoadInt32((*int32)(unsafe.Pointer(&m)))
-	v = v >> mutexWaiterShift //得到等待者的数值
+	v = v >> mutexWaiterShift
 	return int(v)
 }
 
@@ -71,7 +67,7 @@ func HolderCount(m *sync.Mutex) int {
 //   - m: Pointer to the sync.Mutex to check
 //
 // Returns:
-//   - bool: True if the mutex is locked, false otherwise
+//   - bool: true if the mutex is locked, false otherwise
 func IsLocked(m *sync.Mutex) bool {
 	state := atomic.LoadInt32((*int32)(unsafe.Pointer(m)))
 	return state&spinMutexLocked == spinMutexLocked
@@ -84,7 +80,7 @@ func IsLocked(m *sync.Mutex) bool {
 //   - m: Pointer to the sync.Mutex to check
 //
 // Returns:
-//   - bool: True if a waiter has been woken, false otherwise
+//   - bool: true if a waiter has been woken, false otherwise
 func IsWoken(m *sync.Mutex) bool {
 	state := atomic.LoadInt32((*int32)(unsafe.Pointer(m)))
 	return state&mutexWoken == mutexWoken
@@ -98,7 +94,7 @@ func IsWoken(m *sync.Mutex) bool {
 //   - m: Pointer to the sync.Mutex to check
 //
 // Returns:
-//   - bool: True if in starvation mode, false otherwise
+//   - bool: true if in starvation mode, false otherwise
 func IsStarving(m *sync.Mutex) bool {
 	state := atomic.LoadInt32((*int32)(unsafe.Pointer(m)))
 	return state&mutexStarving == mutexStarving

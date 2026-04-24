@@ -19,8 +19,10 @@ type Group struct {
 // Do executes the function f only once for the given key.
 // If multiple goroutines call Do with the same key, only the first call will execute f,
 // and all other calls will wait for the first call to complete.
-// key: the unique identifier for the function execution (can be any comparable type)
-// f: the function to execute only once
+//
+// Parameters:
+//   - key: the unique identifier for the function execution (can be any comparable type)
+//   - f: the function to execute only once
 func (o *Group) Do(key any, f func()) {
 	// If f is nil, there's nothing to execute, so return early
 	if f == nil {

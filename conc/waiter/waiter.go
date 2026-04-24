@@ -10,8 +10,12 @@ import (
 // It takes any object that implements the Wait() method (like sync.WaitGroup) and returns a channel
 // that will be closed when the Wait() method completes.
 // This is useful for integrating blocking Wait operations with select statements.
-// waiter: any object that implements Wait() method
-// Returns a channel that will be closed when waiter.Wait() completes
+//
+// Parameters:
+//   - waiter: any object that implements Wait() method
+//
+// Returns:
+//   - <-chan struct{}: a channel that will be closed when waiter.Wait() completes
 func WaitNotify(waiter interface{ Wait() }) <-chan struct{} {
 	// Create an unbuffered channel to signal completion
 	c := make(chan struct{})
@@ -31,8 +35,12 @@ func WaitNotify(waiter interface{ Wait() }) <-chan struct{} {
 // It takes any object that implements the Wait() error method (like errgroup.Group) and returns a channel
 // that will receive any error when the Wait() method completes.
 // If the Wait() method returns nil, the channel will be closed without sending any value.
-// waiter: any object that implements Wait() error method
-// Returns a buffered channel that will receive an error if waiter.Wait() returns one
+//
+// Parameters:
+//   - waiter: any object that implements Wait() error method
+//
+// Returns:
+//   - <-chan error: a buffered channel that will receive an error if waiter.Wait() returns one
 func WaitNotifyE(waiter interface{ Wait() error }) <-chan error {
 	// Create a buffered channel to send potential errors
 	c := make(chan error, 1)
@@ -55,9 +63,13 @@ func WaitNotifyE(waiter interface{ Wait() error }) <-chan error {
 // It takes any object that implements the Wait(context.Context) error method and returns a channel
 // that will receive any error when the Wait() method completes.
 // If the Wait() method returns nil, the channel will be closed without sending any value.
-// ctx: the context to pass to the waiter's Wait method
-// waiter: any object that implements Wait(context.Context) error method
-// Returns a buffered channel that will receive an error if waiter.Wait(ctx) returns one
+//
+// Parameters:
+//   - ctx: the context to pass to the waiter's Wait method
+//   - waiter: any object that implements Wait(context.Context) error method
+//
+// Returns:
+//   - <-chan error: a buffered channel that will receive an error if waiter.Wait(ctx) returns one
 func WaitContentNotifyE(ctx context.Context, waiter interface{ Wait(context.Context) error }) <-chan error {
 	// Create a buffered channel to send potential errors
 	c := make(chan error, 1)

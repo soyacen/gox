@@ -12,8 +12,8 @@ import (
 	"net/url"
 )
 
-// Transport is an implementation of the http.RoundTripper that uses a user
-// supplied generator function to proxy requests to specific destinations.
+// Transport is an implementation of http.RoundTripper that uses a user-supplied
+// generator function to proxy requests to specific destinations.
 type Transport struct {
 	// Proxy takes an http.Request and provides a URL to use for that request.
 	// Note that the semantics are different from http.DefaultTransport: this
@@ -21,12 +21,20 @@ type Transport struct {
 	// unaltered.
 	Proxy func(*http.Request) (*url.URL, error)
 
-	// Next is the http.RoundTripper to which requests are forwarded.  If Next
+	// Next is the http.RoundTripper to which requests are forwarded. If Next
 	// is nil, http.DefaultTransport is used.
 	Next http.RoundTripper
 }
 
-// RoundTrip implements the RoundTripper interface.
+// RoundTrip implements the http.RoundTripper interface.
+// It applies the proxy URL if configured, then delegates to the next RoundTripper.
+//
+// Parameters:
+//   - req: The HTTP request to send
+//
+// Returns:
+//   - *http.Response: The HTTP response
+//   - error: An error if the proxy fails or the request fails
 func (t Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if t.Proxy != nil {
 		url, err := t.Proxy(req)

@@ -8,6 +8,13 @@ import (
 )
 
 // Dim returns the maximum of x-y or 0.
+//
+// Parameters:
+//   - x: The first value
+//   - y: The second value
+//
+// Returns:
+//   - N: The maximum of x-y or 0
 func Dim[N constraints.Integer | constraints.Float](x, y N) N {
 	v := x - y
 	if v <= 0 {
@@ -17,12 +24,28 @@ func Dim[N constraints.Integer | constraints.Float](x, y N) N {
 	//return N(math.Dim(float64(x), float64(y)))
 }
 
+// Max returns the maximum of two values.
+//
+// Parameters:
+//   - x: The first value
+//   - y: The second value
+//
+// Returns:
+//   - N: The maximum value
 func Max[N constraints.Integer | constraints.Float](x, y N) N {
 	var r N
 	max(x, y, &r)
 	return r
 }
 
+// Min returns the minimum of two values.
+//
+// Parameters:
+//   - x: The first value
+//   - y: The second value
+//
+// Returns:
+//   - N: The minimum value
 func Min[N constraints.Integer | constraints.Float](x, y N) N {
 	var r N
 	min(x, y, &r)

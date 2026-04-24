@@ -5,6 +5,16 @@ import (
 	"strings"
 )
 
+// DecodeBasic decodes a Basic Authentication header string.
+// It extracts the username and password from the authorization header.
+//
+// Parameters:
+//   - auth: The authorization header string
+//
+// Returns:
+//   - string: The decoded username
+//   - string: The decoded password
+//   - bool: True if decoding was successful
 func DecodeBasic(auth string) (username, password string, ok bool) {
 	const prefix = "Basic "
 	if len(auth) < len(prefix) || !strings.EqualFold(auth[:len(prefix)], prefix) {
@@ -22,7 +32,14 @@ func DecodeBasic(auth string) (username, password string, ok bool) {
 	return cs[:s], cs[s+1:], true
 }
 
-// BasicAuth returns a Basic Authentication header string for the given username and password.
+// EncodeBasic returns a Basic Authentication header string for the given username and password.
+//
+// Parameters:
+//   - username: The username for authentication
+//   - passwd: The password for authentication
+//
+// Returns:
+//   - string: The Basic Authentication header value
 func EncodeBasic(username, passwd string) string {
 	auth := username + ":" + passwd
 	return "Basic " + base64.StdEncoding.EncodeToString([]byte(auth))

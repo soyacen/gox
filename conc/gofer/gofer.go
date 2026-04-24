@@ -1,17 +1,25 @@
-// Package gofer 提供了一个简单的异步任务执行器接口
+// Package gofer provides a simple asynchronous task executor interface.
 package gofer
 
 import "context"
 
-// Gofer 定义了异步任务执行器的接口
+// Gofer defines the interface for an asynchronous task executor.
 type Gofer interface {
-	// Go 启动一个异步任务
-	// f: 要执行的任务函数
-	// 返回错误信息，如果启动失败则返回具体错误
+	// Go starts an asynchronous task.
+	//
+	// Parameters:
+	//   - f: the task function to execute.
+	//
+	// Returns:
+	//   - error: an error if the task fails to start.
 	Go(f func()) error
-	
-	// Close 关闭执行器，等待所有任务完成
-	// ctx: 上下文，用于控制关闭超时
-	// 返回错误信息，如果关闭过程中出现错误则返回具体错误
+
+	// Close shuts down the executor and waits for all tasks to complete.
+	//
+	// Parameters:
+	//   - ctx: the context used to control shutdown timeout.
+	//
+	// Returns:
+	//   - error: an error if the shutdown process encounters any issues.
 	Close(ctx context.Context) error
 }

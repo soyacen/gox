@@ -19,9 +19,15 @@ type (
 )
 
 // StringToBytes returns an unsafe bytes slice reference of s.
-// The caller must treat returned slice as immutable.
+// The caller must treat the returned slice as immutable.
 //
 // WARNING: Use carefully. The returned result must not leak to the end user.
+//
+// Parameters:
+//   - s: the string to reference.
+//
+// Returns:
+//   - []byte: the byte slice referencing the string's underlying data.
 func StringToBytes(s string) []byte {
 	var b []byte
 	src := (*stringHeader)(unsafe.Pointer(&s))
@@ -37,6 +43,12 @@ func StringToBytes(s string) []byte {
 //
 // WARNING: Use carefully. The returned result must not leak to the end user
 // unless the input slice is provably immutable.
+//
+// Parameters:
+//   - b: the byte slice to reference.
+//
+// Returns:
+//   - string: the string referencing the slice's underlying data.
 func BytesToString(b []byte) string {
 	var s string
 	src := (*sliceHeader)(unsafe.Pointer(&b))

@@ -5,11 +5,13 @@ import (
 	"fmt"
 )
 
+// KeyError represents an error that occurred while calling a key function.
 type KeyError struct {
 	Obj any
 	Err error
 }
 
+// Error implements the error interface for KeyError.
 func (k KeyError) Error() string {
 	return fmt.Sprintf("heap: failed to call key func, obj: %v, error : %v", k.Obj, k.Err)
 }
@@ -18,6 +20,7 @@ func (k KeyError) Error() string {
 // item should be placed before the second one when the list is sorted.
 type lessFunc = func(item1, item2 any) bool
 
+// KeyFunc is a function type to get the key from an object.
 // KeyFunc is a function type to get the key from an object.
 type KeyFunc func(obj any) (string, error)
 
@@ -55,6 +58,13 @@ var (
 
 // Less compares two objects and returns true if the first one should go
 // in front of the second one in the heap.
+//
+// Parameters:
+//   - i: The index of the first item
+//   - j: The index of the second item
+//
+// Returns:
+//   - bool: True if the first item should go in front
 func (h *data) Less(i, j int) bool {
 	if i > len(h.queue) || j > len(h.queue) {
 		return false
@@ -70,11 +80,18 @@ func (h *data) Less(i, j int) bool {
 	return h.lessFunc(itemi.obj, itemj.obj)
 }
 
-// Len returns the number of items in the Heap.
+// Len returns the number of items in the heap.
+//
+// Returns:
+//   - int: The number of items
 func (h *data) Len() int { return len(h.queue) }
 
-// Swap implements swapping of two elements in the heap. This is a part of standard
-// heap interface and should never be called directly.
+// Swap implements swapping of two elements in the heap.
+// This is part of the standard heap interface and should never be called directly.
+//
+// Parameters:
+//   - i: The index of the first item
+//   - j: The index of the second item
 func (h *data) Swap(i, j int) {
 	h.queue[i], h.queue[j] = h.queue[j], h.queue[i]
 	item := h.items[h.queue[i]]
@@ -83,7 +100,11 @@ func (h *data) Swap(i, j int) {
 	item.index = j
 }
 
-// Push is supposed to be called by heap.Push only.
+// Push adds an item to the heap.
+// It is supposed to be called by heap.Push only.
+//
+// Parameters:
+//   - kv: The key-value pair to push
 func (h *data) Push(kv any) {
 	keyValue := kv.(*itemKeyValue)
 	n := len(h.queue)
@@ -91,7 +112,11 @@ func (h *data) Push(kv any) {
 	h.queue = append(h.queue, keyValue.key)
 }
 
-// Pop is supposed to be called by heap.Pop only.
+// Pop removes and returns the last item from the heap.
+// It is supposed to be called by heap.Pop only.
+//
+// Returns:
+//   - any: The popped item
 func (h *data) Pop() any {
 	key := h.queue[len(h.queue)-1]
 	h.queue = h.queue[0 : len(h.queue)-1]
@@ -104,7 +129,10 @@ func (h *data) Pop() any {
 	return item.obj
 }
 
-// Peek is supposed to be called by heap.Peek only.
+// Peek returns the top item from the heap without removing it.
+//
+// Returns:
+//   - any: The top item, or nil if the heap is empty
 func (h *data) Peek() any {
 	if len(h.queue) > 0 {
 		return h.items[h.queue[0]].obj
@@ -114,14 +142,23 @@ func (h *data) Peek() any {
 
 // Heap is a producer/consumer queue that implements a heap data structure.
 // It can be used to implement priority queues and similar data structures.
+//
+// Fields:
+//   - data: Stores objects and maintains their ordering according to the heap invariant.
 type Heap struct {
 	// data stores objects and has a queue that keeps their ordering according
 	// to the heap invariant.
 	data *data
 }
 
-// Add inserts an item, and puts it in the queue. The item is updated if it
-// already exists.
+// Add inserts an item into the heap.
+// If the item already exists, it is updated.
+//
+// Parameters:
+//   - obj: The object to insert or update
+//
+// Returns:
+//   - error: Error if the key function fails
 func (h *Heap) Add(obj any) error {
 	key, err := h.data.keyFunc(obj)
 	if err != nil {
@@ -136,13 +173,25 @@ func (h *Heap) Add(obj any) error {
 	return nil
 }
 
-// Update is the same as Add in this implementation. When the item does not
-// exist, it is added.
+// Update updates an item in the heap.
+// If the item does not exist, it is added.
+//
+// Parameters:
+//   - obj: The object to update or add
+//
+// Returns:
+//   - error: Error if the key function fails
 func (h *Heap) Update(obj any) error {
 	return h.Add(obj)
 }
 
-// Delete removes an item.
+// Delete removes an item from the heap.
+//
+// Parameters:
+//   - obj: The object to remove
+//
+// Returns:
+//   - error: Error if the key function fails or the object is not found
 func (h *Heap) Delete(obj any) error {
 	key, err := h.data.keyFunc(obj)
 	if err != nil {
@@ -156,11 +205,18 @@ func (h *Heap) Delete(obj any) error {
 }
 
 // Peek returns the head of the heap without removing it.
+//
+// Returns:
+//   - any: The head item, or nil if the heap is empty
 func (h *Heap) Peek() any {
 	return h.data.Peek()
 }
 
 // Pop returns the head of the heap and removes it.
+//
+// Returns:
+//   - any: The head item
+//   - error: Error if the heap is empty
 func (h *Heap) Pop() (any, error) {
 	obj := heap.Pop(h.data)
 	if obj != nil {
@@ -169,7 +225,15 @@ func (h *Heap) Pop() (any, error) {
 	return nil, fmt.Errorf("heap: object was removed from heap data")
 }
 
-// Get returns the requested item, or sets exists=false.
+// Get returns the requested item.
+//
+// Parameters:
+//   - obj: The object to search for
+//
+// Returns:
+//   - any: The found item
+//   - bool: True if the item exists
+//   - error: Error if the key function fails
 func (h *Heap) Get(obj any) (any, bool, error) {
 	key, err := h.data.keyFunc(obj)
 	if err != nil {
@@ -178,7 +242,15 @@ func (h *Heap) Get(obj any) (any, bool, error) {
 	return h.GetByKey(key)
 }
 
-// GetByKey returns the requested item, or sets exists=false.
+// GetByKey returns the requested item by its key.
+//
+// Parameters:
+//   - key: The key of the item to retrieve
+//
+// Returns:
+//   - any: The found item
+//   - bool: True if the item exists
+//   - error: Error if the key function fails
 func (h *Heap) GetByKey(key string) (any, bool, error) {
 	item, exists := h.data.items[key]
 	if !exists {
@@ -187,7 +259,10 @@ func (h *Heap) GetByKey(key string) (any, bool, error) {
 	return item.obj, true, nil
 }
 
-// List returns a list of all the items.
+// List returns a list of all items in the heap.
+//
+// Returns:
+//   - []any: A slice containing all items
 func (h *Heap) List() []any {
 	list := make([]any, 0, len(h.data.items))
 	for _, item := range h.data.items {
@@ -197,11 +272,21 @@ func (h *Heap) List() []any {
 }
 
 // Len returns the number of items in the heap.
+//
+// Returns:
+//   - int: The number of items
 func (h *Heap) Len() int {
 	return len(h.data.queue)
 }
 
-// New returns a Heap which can be used to queue up items to process.
+// New creates a new Heap instance.
+//
+// Parameters:
+//   - keyFn: Function to extract keys from objects
+//   - lessFn: Function to compare two objects
+//
+// Returns:
+//   - *Heap: A new heap instance
 func New(keyFn KeyFunc, lessFn lessFunc) *Heap {
 	return &Heap{
 		data: &data{

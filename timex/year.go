@@ -2,6 +2,14 @@ package timex
 
 import "time"
 
+// Year returns the first day of the year for the given time.
+// If no time is provided, it uses the current time.
+//
+// Parameters:
+//   - ts: optional time value (defaults to time.Now()).
+//
+// Returns:
+//   - time.Time: January 1st of the year at midnight.
 func Year(ts ...time.Time) time.Time {
 	if len(ts) <= 0 {
 		return year(time.Now())

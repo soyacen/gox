@@ -1,33 +1,41 @@
-// Package grpool 实现了基于grpool库的Gofer接口
+// Package grpool implements the Gofer interface using the grpool library.
 package grpool
 
 import (
 	"context"
 
-	"github.com/soyacen/gox/conc/gofer"
 	"github.com/ivpusic/grpool"
+	"github.com/soyacen/gox/conc/gofer"
 )
 
-// 确保Gofer实现了gofer.Gofer接口
+// Ensure Gofer implements the gofer.Gofer interface.
 var _ gofer.Gofer = (*Gofer)(nil)
 
-// Gofer 是基于grpool的异步任务执行器实现
+// Gofer is an asynchronous task executor implementation based on grpool.
 type Gofer struct {
-	// Pool 底层的grpool工作池
+	// Pool is the underlying grpool worker pool.
 	Pool *grpool.Pool
 }
 
-// Go 提交一个任务到grpool的工作队列中
-// f: 要执行的任务函数
-// 返回nil，因为向通道发送任务不会返回错误
+// Go submits a task to the grpool job queue.
+//
+// Parameters:
+//   - f: the task function to execute.
+//
+// Returns:
+//   - error: always nil as sending to the channel does not return an error.
 func (g *Gofer) Go(f func()) error {
 	g.Pool.JobQueue <- f
 	return nil
 }
 
-// Close 释放grpool资源
-// ctx: 上下文参数（当前实现未使用）
-// 返回nil，因为grpool.Release不会返回错误
+// Close releases the grpool resources.
+//
+// Parameters:
+//   - ctx: the context used to control shutdown timeout (not used in the current implementation).
+//
+// Returns:
+//   - error: always nil as grpool.Release does not return an error.
 func (g *Gofer) Close(ctx context.Context) error {
 	g.Pool.Release()
 	return nil

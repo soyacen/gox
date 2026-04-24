@@ -1,4 +1,4 @@
-// Package gopgpool 实现了基于go-playground/pool库的Gofer接口
+// Package gopgpool implements the Gofer interface using the go-playground/pool library.
 package gopgpool
 
 import (
@@ -9,20 +9,24 @@ import (
 	"gopkg.in/go-playground/pool.v3"
 )
 
-// 确保Gofer实现了gofer.Gofer接口
+// Ensure Gofer implements the gofer.Gofer interface.
 var _ gofer.Gofer = (*Gofer)(nil)
 
-// Gofer 是基于go-playground/pool的异步任务执行器实现
+// Gofer is an asynchronous task executor implementation based on go-playground/pool.
 type Gofer struct {
-	// Pool 底层的go-playground工作池
+	// Pool is the underlying go-playground worker pool.
 	Pool pool.Pool
-	// m 用于存储工作单元，确保所有任务完成
+	// m is used to store work units to ensure all tasks are completed.
 	m sync.Map
 }
 
-// Go 提交一个任务到go-playground工作池中执行
-// f: 要执行的任务函数
-// 返回nil，因为任务提交总是成功
+// Go submits a task to the go-playground pool for execution.
+//
+// Parameters:
+//   - f: the task function to execute.
+//
+// Returns:
+//   - error: always nil as task submission always succeeds.
 func (g *Gofer) Go(f func()) error {
 	// 将任务加入队列
 	unit := g.Pool.Queue(func(unit pool.WorkUnit) (interface{}, error) {
@@ -37,9 +41,13 @@ func (g *Gofer) Go(f func()) error {
 	return nil
 }
 
-// Close 关闭go-playground工作池并等待所有任务完成
-// ctx: 上下文参数（当前实现未使用）
-// 返回nil，因为pool.Close不会返回错误
+// Close shuts down the go-playground pool and waits for all tasks to complete.
+//
+// Parameters:
+//   - ctx: the context used to control shutdown timeout (not used in the current implementation).
+//
+// Returns:
+//   - error: always nil as pool.Close does not return an error.
 func (g *Gofer) Close(ctx context.Context) error {
 	// 关闭工作池
 	g.Pool.Close()

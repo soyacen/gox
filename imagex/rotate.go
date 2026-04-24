@@ -2,7 +2,13 @@ package imagex
 
 import "image"
 
-// Rotate90 旋转90度
+// Rotate90 rotates the given image 90 degrees clockwise.
+//
+// Parameters:
+//   - oldImage: the source image to rotate
+//
+// Returns:
+//   - image.Image: a new RGBA image rotated 90 degrees clockwise
 func Rotate90(oldImage image.Image) image.Image {
 	newImage := image.NewRGBA(image.Rect(0, 0, oldImage.Bounds().Dy(), oldImage.Bounds().Dx()))
 	for x := oldImage.Bounds().Min.Y; x < oldImage.Bounds().Max.Y; x++ {
@@ -13,7 +19,13 @@ func Rotate90(oldImage image.Image) image.Image {
 	return newImage
 }
 
-// Rotate180 旋转180度
+// Rotate180 rotates the given image 180 degrees.
+//
+// Parameters:
+//   - oldImage: the source image to rotate
+//
+// Returns:
+//   - image.Image: a new RGBA image rotated 180 degrees
 func Rotate180(oldImage image.Image) image.Image {
 	newImage := image.NewRGBA(image.Rect(0, 0, oldImage.Bounds().Dx(), oldImage.Bounds().Dy()))
 	for x := oldImage.Bounds().Min.X; x < oldImage.Bounds().Max.X; x++ {
@@ -24,7 +36,13 @@ func Rotate180(oldImage image.Image) image.Image {
 	return newImage
 }
 
-// Rotate270 旋转270度
+// Rotate270 rotates the given image 270 degrees clockwise (or 90 degrees counter-clockwise).
+//
+// Parameters:
+//   - oldImage: the source image to rotate
+//
+// Returns:
+//   - image.Image: a new RGBA image rotated 270 degrees clockwise
 func Rotate270(oldImage image.Image) image.Image {
 	newImage := image.NewRGBA(image.Rect(0, 0, oldImage.Bounds().Dy(), oldImage.Bounds().Dx()))
 	for x := oldImage.Bounds().Min.Y; x < oldImage.Bounds().Max.Y; x++ {

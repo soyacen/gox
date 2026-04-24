@@ -39,6 +39,13 @@ func Lines(file *os.File) iter.Seq[[]byte] {
 	}
 }
 
+// Primary returns the primary name of a file without its extension.
+//
+// Parameters:
+//   - path: The file path
+//
+// Returns:
+//   - string: The file name without extension
 func Primary(path string) string {
 	return strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
 }
@@ -66,12 +73,28 @@ func List(root string) ([]string, error) {
 	return files, err
 }
 
+// Extension returns the file extension without the leading dot.
+//
+// Parameters:
+//   - path: The file path
+//
+// Returns:
+//   - string: The file extension
 func Extension(path string) string {
 	return strings.TrimPrefix(filepath.Ext(path), ".")
 }
 
 var DownloadClient = &http.Client{}
 
+// DownloadToReader downloads content from a URL and returns it as a ReadCloser.
+//
+// Parameters:
+//   - ctx: The context for cancellation
+//   - url: The URL to download from
+//
+// Returns:
+//   - io.ReadCloser: The response body
+//   - error: Error if the download fails
 func DownloadToReader(ctx context.Context, url string) (io.ReadCloser, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
@@ -90,6 +113,15 @@ func DownloadToReader(ctx context.Context, url string) (io.ReadCloser, error) {
 	return resp.Body, nil
 }
 
+// DownloadToData downloads content from a URL and returns it as a byte slice.
+//
+// Parameters:
+//   - ctx: The context for cancellation
+//   - url: The URL to download from
+//
+// Returns:
+//   - []byte: The downloaded content
+//   - error: Error if the download fails
 func DownloadToData(ctx context.Context, url string) ([]byte, error) {
 	reader, err := DownloadToReader(ctx, url)
 	if err != nil {
@@ -99,6 +131,15 @@ func DownloadToData(ctx context.Context, url string) ([]byte, error) {
 	return io.ReadAll(reader)
 }
 
+// DownloadToFile downloads content from a URL and saves it to a file.
+//
+// Parameters:
+//   - ctx: The context for cancellation
+//   - url: The URL to download from
+//   - filepath: The path to save the file
+//
+// Returns:
+//   - error: Error if the download or save fails
 func DownloadToFile(ctx context.Context, url, filepath string) error {
 	reader, err := DownloadToReader(ctx, url)
 	if err != nil {
@@ -123,7 +164,15 @@ func DownloadToFile(ctx context.Context, url, filepath string) error {
 	return nil
 }
 
-// CopyFile 复制文件
+// CopyFile copies a file from source to destination.
+// If the destination directory does not exist, it will be created.
+//
+// Parameters:
+//   - src: The source file path
+//   - dst: The destination file path
+//
+// Returns:
+//   - error: Error if the copy fails
 func CopyFile(src, dst string) error {
 	if src == dst {
 		return nil
@@ -166,7 +215,14 @@ func CopyFile(src, dst string) error {
 	return nil
 }
 
-// CopyDir  拷贝整个目录
+// CopyDir copies an entire directory from source to destination.
+//
+// Parameters:
+//   - src: The source directory path
+//   - dst: The destination directory path
+//
+// Returns:
+//   - error: Error if the copy fails
 func CopyDir(src, dst string) error {
 	return filepath.WalkDir(src, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -184,6 +240,14 @@ func CopyDir(src, dst string) error {
 	})
 }
 
+// Unzip extracts a zip archive to the specified destination directory.
+//
+// Parameters:
+//   - src: The path to the zip file
+//   - dst: The destination directory
+//
+// Returns:
+//   - error: Error if extraction fails
 func Unzip(src, dst string) (err error) {
 	zipReader, err := zip.OpenReader(src)
 	if err != nil {
@@ -231,6 +295,12 @@ func extractAndWriteFile(zipFile *zip.File, dst string) error {
 }
 
 // IsDir reports whether the named file is a directory.
+//
+// Parameters:
+//   - filepath: The path to check
+//
+// Returns:
+//   - bool: True if the path is a directory, false otherwise
 func IsDir(filepath string) bool {
 	f, err := os.Stat(filepath)
 	if err != nil {
@@ -239,7 +309,14 @@ func IsDir(filepath string) bool {
 	return f.IsDir()
 }
 
-// GetSize 获取文件大小
+// GetSize returns the size of the file at the given path.
+//
+// Parameters:
+//   - path: The file path
+//
+// Returns:
+//   - int64: The file size in bytes
+//   - error: Error if the file does not exist
 func GetSize(path string) (int64, error) {
 	fileInfo, err := os.Stat(path)
 	if err != nil {
@@ -261,6 +338,13 @@ const (
 	// Brontobyte         = 1024 * Yottabyte
 )
 
+// HumanReadableSize converts a size in bytes to a human-readable string.
+//
+// Parameters:
+//   - size: The size in bytes
+//
+// Returns:
+//   - string: The human-readable size (e.g., "1.5GB")
 func HumanReadableSize(size int64) string {
 	s := size
 	if s < 0 {

@@ -17,7 +17,7 @@ import (
 	"github.com/soyacen/gox/stringx"
 )
 
-// CodeWriter 表示一个正在生成的Go源文件
+// CodeWriter represents a Go source file being generated.
 type CodeWriter struct {
 	filename          string                          // 文件名
 	goImportPath      GoImportPath                    // 当前文件的导入路径
@@ -28,7 +28,14 @@ type CodeWriter struct {
 	ImportRewriteFunc func(GoImportPath) GoImportPath // 导入路径重写函数
 }
 
-// NewCodeWriter 创建一个新的生成文件实例
+// NewCodeWriter creates a new CodeWriter instance for generating Go source files.
+//
+// Parameters:
+//   - filename: the name of the file being generated
+//   - goImportPath: the import path of the current file
+//
+// Returns:
+//   - *CodeWriter: a new CodeWriter instance
 func NewCodeWriter(filename string, goImportPath GoImportPath) *CodeWriter {
 	g := &CodeWriter{
 		filename:         filename,
@@ -45,8 +52,11 @@ func NewCodeWriter(filename string, goImportPath GoImportPath) *CodeWriter {
 	return g
 }
 
-// P 将参数打印到缓冲区，每行结束添加换行符
-// 特殊处理 GoIdent 类型，将其转换为适当的限定名称
+// P prints arguments to the buffer, appending a newline after each call.
+// Special handling for GoIdent types, converting them to qualified names.
+//
+// Parameters:
+//   - v: values to print
 func (g *CodeWriter) P(v ...any) {
 	for _, x := range v {
 		switch x := x.(type) {
@@ -59,18 +69,34 @@ func (g *CodeWriter) P(v ...any) {
 	fmt.Fprintln(&g.buf)
 }
 
-// Import 添加一个手动导入的包路径
+// Import adds a manual import package path.
+//
+// Parameters:
+//   - importPath: the import path to add
 func (g *CodeWriter) Import(importPath GoImportPath) {
 	g.manualImports[importPath] = true
 }
 
-// Write 实现 io.Writer 接口，将字节写入内部缓冲区
+// Write implements the io.Writer interface, writing bytes to the internal buffer.
+//
+// Parameters:
+//   - p: bytes to write
+//
+// Returns:
+//   - int: number of bytes written
+//   - error: any write error
 func (g *CodeWriter) Write(p []byte) (n int, err error) {
 	return g.buf.Write(p)
 }
 
-// QualifiedGoIdent 返回给定标识符的限定名称（包名.标识符）
-// 如果标识符在同一包中，则只返回标识符名称
+// QualifiedGoIdent returns the qualified name (package.name) for the given identifier.
+// If the identifier is in the same package, only the identifier name is returned.
+//
+// Parameters:
+//   - ident: the Go identifier to qualify
+//
+// Returns:
+//   - string: the qualified name
 func (g *CodeWriter) QualifiedGoIdent(ident GoIdent) string {
 	// 如果标识符属于当前包，则直接返回名称
 	if ident.GoImportPath == g.goImportPath {
@@ -96,7 +122,11 @@ func (g *CodeWriter) QualifiedGoIdent(ident GoIdent) string {
 	return string(packageName) + "." + ident.GoName
 }
 
-// Content 获取生成的文件内容，如果文件是Go源码则自动处理导入声明
+// Content returns the generated file content, automatically processing import declarations if the file is Go source.
+//
+// Returns:
+//   - []byte: the generated file content
+//   - error: any parsing or formatting error
 func (g *CodeWriter) Content() ([]byte, error) {
 	if !strings.HasSuffix(g.filename, ".go") {
 		return g.buf.Bytes(), nil
@@ -184,10 +214,13 @@ func (g *CodeWriter) Content() ([]byte, error) {
 	return out.Bytes(), nil
 }
 
-// Comments 表示Go代码中的注释
+// Comments represents comments in Go code.
 type Comments string
 
-// String 将注释转换为Go代码中的注释格式
+// String converts comments to Go comment format.
+//
+// Returns:
+//   - string: the formatted comments
 func (c Comments) String() string {
 	if c == "" {
 		return ""
@@ -201,27 +234,39 @@ func (c Comments) String() string {
 	return string(b)
 }
 
-// GoIdent 表示Go代码中的标识符，包括名称和所属的导入路径
+// GoIdent represents a Go identifier, including its name and import path.
 type GoIdent struct {
 	GoName       string       // 标识符名称
 	GoImportPath GoImportPath // 所属包的导入路径
 }
 
-// String 返回标识符的字符串表示
+// String returns the string representation of the identifier.
+//
+// Returns:
+//   - string: formatted as "importPath".name
 func (id GoIdent) String() string { return fmt.Sprintf("%q.%v", id.GoImportPath, id.GoName) }
 
-// GoImportPath 表示Go代码中的导入路径
+// GoImportPath represents a Go import path.
 type GoImportPath string
 
-// String 返回导入路径的字符串表示
+// String returns the string representation of the import path.
+//
+// Returns:
+//   - string: the quoted import path
 func (p GoImportPath) String() string { return strconv.Quote(string(p)) }
 
-// Ident 根据名称创建一个在该导入路径下的标识符
+// Ident creates an identifier under this import path with the given name.
+//
+// Parameters:
+//   - s: the identifier name
+//
+// Returns:
+//   - GoIdent: the created identifier
 func (p GoImportPath) Ident(s string) GoIdent {
 	return GoIdent{GoName: s, GoImportPath: p}
 }
 
-// GoPackageName 表示Go代码中的包名
+// GoPackageName represents a Go package name.
 type GoPackageName string
 
 // cleanPackageName 清理包名，确保其符合Go命名规则

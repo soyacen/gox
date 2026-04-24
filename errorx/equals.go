@@ -7,7 +7,16 @@ import (
 	"github.com/soyacen/gox/reflectx"
 )
 
-// Equals 判断两个错误是否相等
+// Equals checks whether two errors are equal.
+// It first checks for nil equality, then uses errors.Is, reflection-based type comparison,
+// and deep equality to determine if the errors represent the same value.
+//
+// Parameters:
+//   - err: The error to compare
+//   - target: The target error to compare against
+//
+// Returns:
+//   - bool: true if the errors are equal, false otherwise
 func Equals(err, target error) bool {
 	if err == nil && target == nil {
 		return true

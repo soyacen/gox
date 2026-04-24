@@ -1,6 +1,7 @@
 package listx
 
-// Element is an element of a null terminated (non circular) intrusive doubly linked list that contains the key of the correspondent element in the ordered map too.
+// Element represents an element of a null terminated (non-circular) intrusive doubly linked list.
+// It contains the key and value of the corresponding entry.
 type Element[K comparable, V any] struct {
 	// Next and previous pointers in the doubly-linked list of elements.
 	// To simplify the implementation, internally a list l is implemented
@@ -16,37 +17,56 @@ type Element[K comparable, V any] struct {
 	Value V
 }
 
-// Next returns the next list element or nil.
+// Next returns the next list element.
+//
+// Returns:
+//   - *Element[K, V]: the next element, or nil if there is none.
 func (e *Element[K, V]) Next() *Element[K, V] {
 	return e.next
 }
 
-// Prev returns the previous list element or nil.
+// Prev returns the previous list element.
+//
+// Returns:
+//   - *Element[K, V]: the previous element, or nil if there is none.
 func (e *Element[K, V]) Prev() *Element[K, V] {
 	return e.prev
 }
 
-// list represents a null terminated (non circular) intrusive doubly linked list.
-// The list is immediately usable after instantiation without the need of a dedicated initialization.
+// List represents a null terminated (non-circular) intrusive doubly linked list.
+// The list is immediately usable after instantiation without dedicated initialization.
 type List[K comparable, V any] struct {
 	root Element[K, V] // list head and tail
 }
 
+// IsEmpty reports whether the list is empty.
+//
+// Returns:
+//   - bool: true if the list contains no elements, false otherwise.
 func (l *List[K, V]) IsEmpty() bool {
 	return l.root.next == nil
 }
 
-// Front returns the first element of list l or nil if the list is empty.
+// Front returns the first element of the list.
+//
+// Returns:
+//   - *Element[K, V]: the first element, or nil if the list is empty.
 func (l *List[K, V]) Front() *Element[K, V] {
 	return l.root.next
 }
 
-// Back returns the last element of list l or nil if the list is empty.
+// Back returns the last element of the list.
+//
+// Returns:
+//   - *Element[K, V]: the last element, or nil if the list is empty.
 func (l *List[K, V]) Back() *Element[K, V] {
 	return l.root.prev
 }
 
-// Remove removes e from its list
+// Remove removes the specified element from the list.
+//
+// Parameters:
+//   - e: the element to remove.
 func (l *List[K, V]) Remove(e *Element[K, V]) {
 	if e.prev == nil {
 		l.root.next = e.next
@@ -62,7 +82,14 @@ func (l *List[K, V]) Remove(e *Element[K, V]) {
 	e.prev = nil // avoid memory leaks
 }
 
-// PushFront inserts a new element e with value v at the front of list l and returns e.
+// PushFront inserts a new element with the given key and value at the front of the list.
+//
+// Parameters:
+//   - key: the key for the new element.
+//   - value: the value for the new element.
+//
+// Returns:
+//   - *Element[K, V]: the newly inserted element.
 func (l *List[K, V]) PushFront(key K, value V) *Element[K, V] {
 	e := &Element[K, V]{Key: key, Value: value}
 	if l.root.next == nil {
@@ -78,7 +105,14 @@ func (l *List[K, V]) PushFront(key K, value V) *Element[K, V] {
 	return e
 }
 
-// PushBack inserts a new element e with value v at the back of list l and returns e.
+// PushBack inserts a new element with the given key and value at the back of the list.
+//
+// Parameters:
+//   - key: the key for the new element.
+//   - value: the value for the new element.
+//
+// Returns:
+//   - *Element[K, V]: the newly inserted element.
 func (l *List[K, V]) PushBack(key K, value V) *Element[K, V] {
 	e := &Element[K, V]{Key: key, Value: value}
 	if l.root.prev == nil {

@@ -10,8 +10,10 @@ import (
 // Do executes the given function f and captures any panics that may occur during execution.
 // If a panic occurs, it optionally calls the first recovery function from rs to handle the panic.
 // If no recovery function is provided, it defaults to logging the panic information.
-// f: the function to execute
-// rs: optional recovery functions to handle panics
+//
+// Parameters:
+//   - f: the function to execute
+//   - rs: optional recovery functions to handle panics
 func Do(f func(), rs ...func(p any, stack []byte)) {
 	defer func() {
 		if p := recover(); p != nil {
@@ -34,9 +36,14 @@ func Do(f func(), rs ...func(p any, stack []byte)) {
 }
 
 // DoE is functionally equivalent to Do but returns an error.
-// f: the function to execute that may return an error
-// rs: optional recovery functions to handle panics and return errors
-// Returns the error from f or a panic-converted error
+// It executes the given function f and captures any panics, converting them to errors.
+//
+// Parameters:
+//   - f: the function to execute that may return an error
+//   - rs: optional recovery functions to handle panics and return errors
+//
+// Returns:
+//   - error: the error from f or a panic-converted error
 func DoE(f func() error, rs ...func(p any, stack []byte) error) (err error) {
 	defer func() {
 		if p := recover(); p != nil {
@@ -59,10 +66,18 @@ func DoE(f func() error, rs ...func(p any, stack []byte) error) (err error) {
 }
 
 // DoRE is functionally equivalent to DoE but returns both a result and an error.
-// R: generic type for the result
-// f: the function to execute that returns a result and an error
-// rs: optional recovery functions to handle panics and return errors
-// Returns the result from f and the error from f or a panic-converted error
+// It executes the given function f and captures any panics, converting them to errors.
+//
+// Type Parameters:
+//   - R: the type of the result
+//
+// Parameters:
+//   - f: the function to execute that returns a result and an error
+//   - rs: optional recovery functions to handle panics and return errors
+//
+// Returns:
+//   - R: the result from f
+//   - error: the error from f or a panic-converted error
 func DoRE[R any](f func() (R, error), rs ...func(p any, stack []byte) error) (_ R, err error) {
 	defer func() {
 		if p := recover(); p != nil {
@@ -84,17 +99,23 @@ func DoRE[R any](f func() (R, error), rs ...func(p any, stack []byte) error) (_ 
 	return f()
 }
 
-// Go asynchronously executes the Do function.
-// f: the function to execute
-// rs: optional recovery functions to handle panics
+// Go asynchronously executes the Do function in a new goroutine.
+//
+// Parameters:
+//   - f: the function to execute
+//   - rs: optional recovery functions to handle panics
 func Go(f func(), rs ...func(p any, stack []byte)) {
 	go Do(f, rs...)
 }
 
-// GoE asynchronously executes the DoE function and returns an error channel.
-// f: the function to execute that may return an error
-// rs: optional recovery functions to handle panics and return errors
-// Returns a channel that will receive the error if any
+// GoE asynchronously executes the DoE function in a new goroutine and returns an error channel.
+//
+// Parameters:
+//   - f: the function to execute that may return an error
+//   - rs: optional recovery functions to handle panics and return errors
+//
+// Returns:
+//   - <-chan error: a channel that will receive the error if any
 func GoE(f func() error, rs ...func(p any, stack []byte) error) <-chan error {
 	// Create error channel with buffer of 1
 	errC := make(chan error, 1)
@@ -111,11 +132,18 @@ func GoE(f func() error, rs ...func(p any, stack []byte) error) <-chan error {
 	return errC
 }
 
-// GoRE asynchronously executes the DoRE function and returns a result channel and an error channel.
-// R: generic type for the result
-// f: the function to execute that returns a result and an error
-// rs: optional recovery functions to handle panics and return errors
-// Returns a channel for the result and a channel for the error
+// GoRE asynchronously executes the DoRE function in a new goroutine and returns result and error channels.
+//
+// Type Parameters:
+//   - R: the type of the result
+//
+// Parameters:
+//   - f: the function to execute that returns a result and an error
+//   - rs: optional recovery functions to handle panics and return errors
+//
+// Returns:
+//   - <-chan R: a channel that will receive the result if successful
+//   - <-chan error: a channel that will receive the error if any
 func GoRE[R any](f func() (R, error), rs ...func(p any, stack []byte) error) (<-chan R, <-chan error) {
 	// Create result and error channels with buffer of 1
 	retC := make(chan R, 1)

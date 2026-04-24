@@ -14,9 +14,13 @@ var (
 	slash     = []byte("/")
 )
 
-// Stack returns a nicely formatted stack frame, skipping skip frames.
-// From github.com/gin-gonic/gin/recovery.go
-// Copyright (c) 2014 Manuel Martínez-Almeida
+// Stack returns a nicely formatted stack frame, skipping the specified number of frames.
+//
+// Parameters:
+//   - skip: The number of stack frames to skip
+//
+// Returns:
+//   - []byte: The formatted stack trace
 func Stack(skip int) []byte {
 	buf := new(bytes.Buffer) // the returned data
 	// As we loop, we open files and read them. These variables record the currently

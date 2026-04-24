@@ -7,6 +7,15 @@ import (
 	"encoding/pem"
 )
 
+// DecodeKeyHex decodes a PEM-encoded RSA private key and returns the private and public keys as hex strings.
+//
+// Parameters:
+//   - data: The PEM-encoded RSA private key data.
+//
+// Returns:
+//   - string: The hex-encoded private key.
+//   - string: The hex-encoded public key.
+//   - error: An error if decoding fails.
 func DecodeKeyHex(data []byte) (string, string, error) {
 	block, _ := pem.Decode(data)
 	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
@@ -18,6 +27,15 @@ func DecodeKeyHex(data []byte) (string, string, error) {
 	return privateKeyStr, publicKeyStr, nil
 }
 
+// DecodeKeyBase64 decodes a PEM-encoded RSA private key and returns the private and public keys as Base64 strings.
+//
+// Parameters:
+//   - data: The PEM-encoded RSA private key data.
+//
+// Returns:
+//   - string: The Base64-encoded private key.
+//   - string: The Base64-encoded public key.
+//   - error: An error if decoding fails.
 func DecodeKeyBase64(data []byte) (string, string, error) {
 	block, _ := pem.Decode(data)
 	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
