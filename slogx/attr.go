@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/sanity-io/litter"
 	"golang.org/x/exp/constraints"
 )
 
@@ -129,9 +130,19 @@ func Error(key string, value error) slog.Attr {
 	return String(key, value.Error())
 }
 
-// func Valuer(key string, value slog.LogValuer) slog.Attr {
-// 	return slog.Attr{Key: key, Value: value.LogValue()}
-// }
 
-// KindGroup
-// KindLogValuer
+// Struct creates a slog.Attr with a pretty-printed struct value using litter.
+// If the value is nil, it returns a string attribute with "<nil>".
+//
+// Parameters:
+//   - key: the attribute key
+//   - value: the struct value to pretty-print
+//
+// Returns:
+//   - slog.Attr: the created attribute with a formatted string representation
+func Struct(key string, value any) slog.Attr {
+	if value == nil {
+		return String(key, "<nil>")
+	}
+	return slog.Attr{Key: key, Value: slog.StringValue(litter.Sdump(value))}
+}
