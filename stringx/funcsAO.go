@@ -29,12 +29,12 @@ var (
 	notDigitsRe       = regexp.MustCompile(`[^0-9]`)
 	slugifyRe         = regexp.MustCompile(`[^\w\s\-]`)
 	spaceUnderscoreRe = regexp.MustCompile("[_\\s]+")
-	spacesRe          = regexp.MustCompile("[\\s\xA0]+")
+	spacesRe          = regexp.MustCompile(`[\s ]+`)
 	stripPuncRe       = regexp.MustCompile(`[^\w\s]|_`)
 	templateRe        = regexp.MustCompile(`([\-\[\]()*\s])`)
 	templateRe2       = regexp.MustCompile(`\$`)
 	underscoreRe      = regexp.MustCompile(`([a-z\d])([A-Z]+)`)
-	whitespaceRe      = regexp.MustCompile(`^[\s\xa0]*$`)
+	whitespaceRe      = regexp.MustCompile(`^[\s ]*$`)
 )
 
 // Between extracts a string between left and right strings.
