@@ -10,8 +10,14 @@ import (
 func TestMust(t *testing.T) {
 	v := Must(testString())
 	assert.NotEmpty(t, v)
-	v = Must(testStringError())
-	assert.Empty(t, v)
+
+	// Test that Must panics when there's an error
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("Must() should have panicked")
+		}
+	}()
+	Must(testStringError())
 }
 
 func testString() (string, error) {

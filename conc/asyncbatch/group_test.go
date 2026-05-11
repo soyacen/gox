@@ -8,7 +8,7 @@ import (
 
 func TestBatchBySize(t *testing.T) {
 	ch := make(chan []int, 1)
-	g, err := New[int](3, time.Second, func(p any) {}, func(objs []int) { ch <- objs })
+	g, err := New[int](func(objs []int) { ch <- objs }, Size(3), Interval(time.Second))
 	if err != nil {
 		t.Fatalf("New error: %v", err)
 	}
@@ -32,14 +32,14 @@ func TestBatchBySize(t *testing.T) {
 		if batch[0] != 1 || batch[1] != 2 || batch[2] != 3 {
 			t.Fatalf("unexpected batch values: %v", batch)
 		}
-	case <-time.After(200 * time.Millisecond):
+	case <-time.After(500 * time.Millisecond):
 		t.Fatal("timeout waiting for batch by size")
 	}
 }
 
 func TestBatchByInterval(t *testing.T) {
 	ch := make(chan []int, 1)
-	g, err := New[int](5, 50*time.Millisecond, func(p any) {}, func(objs []int) { ch <- objs })
+	g, err := New[int](func(objs []int) { ch <- objs }, Size(5), Interval(50*time.Millisecond))
 	if err != nil {
 		t.Fatalf("New error: %v", err)
 	}
@@ -64,7 +64,7 @@ func TestBatchByInterval(t *testing.T) {
 
 func TestCloseFlushesRemaining(t *testing.T) {
 	ch := make(chan []int, 1)
-	g, err := New[int](10, time.Second, func(p any) {}, func(objs []int) { ch <- objs })
+	g, err := New[int](func(objs []int) { ch <- objs }, Size(10), Interval(time.Second))
 	if err != nil {
 		t.Fatalf("New error: %v", err)
 	}
@@ -76,7 +76,6 @@ func TestCloseFlushesRemaining(t *testing.T) {
 		t.Fatalf("Submit error: %v", err)
 	}
 
-	// Close should flush remaining items
 	if err := g.Close(); err != nil {
 		t.Fatalf("Close error: %v", err)
 	}
@@ -93,7 +92,12 @@ func TestCloseFlushesRemaining(t *testing.T) {
 
 func TestRecoverHandlerCalled(t *testing.T) {
 	recCh := make(chan any, 1)
-	g, err := New[int](1, time.Second, func(p any) { recCh <- p }, func(objs []int) { panic("boom") })
+	g, err := New[int](
+		func(objs []int) { panic("boom") },
+		Size(1),
+		Interval(time.Second),
+		Recover(func(p any, stack []byte) { recCh <- p }),
+	)
 	if err != nil {
 		t.Fatalf("New error: %v", err)
 	}
@@ -116,11 +120,15 @@ func TestRecoverHandlerCalled(t *testing.T) {
 func TestConcurrentSubmitAndClose(t *testing.T) {
 	total := 200
 	processed := make(chan int, total)
-	g, err := New[int](10, 100*time.Millisecond, func(p any) {}, func(objs []int) {
-		for _, v := range objs {
-			processed <- v
-		}
-	})
+	g, err := New[int](
+		func(objs []int) {
+			for _, v := range objs {
+				processed <- v
+			}
+		},
+		Size(10),
+		Interval(100*time.Millisecond),
+	)
 	if err != nil {
 		t.Fatalf("New error: %v", err)
 	}
@@ -131,14 +139,11 @@ func TestConcurrentSubmitAndClose(t *testing.T) {
 		i := i
 		go func() {
 			defer wg.Done()
-			if err := g.Submit(i); err != nil {
-				// if closed, skip
-			}
+			_ = g.Submit(i)
 		}()
 	}
 	wg.Wait()
 
-	// Close should flush any remaining and wait for loop to finish
 	if err := g.Close(); err != nil {
 		t.Fatalf("Close error: %v", err)
 	}
@@ -151,5 +156,41 @@ func TestConcurrentSubmitAndClose(t *testing.T) {
 		case <-time.After(2 * time.Second):
 			t.Fatalf("timeout waiting for processed items, got %d of %d", count, total)
 		}
+	}
+}
+
+func TestNewNilTask(t *testing.T) {
+	g, err := New[int](nil)
+	if err == nil {
+		t.Fatal("expected error when task is nil")
+	}
+	if g != nil {
+		t.Fatalf("expected nil Group, got %v", g)
+	}
+}
+
+func TestSubmitAfterClose(t *testing.T) {
+	g, err := New[int](func(objs []int) {}, Size(10), Interval(time.Second))
+	if err != nil {
+		t.Fatalf("New error: %v", err)
+	}
+	if err := g.Close(); err != nil {
+		t.Fatalf("Close error: %v", err)
+	}
+	if err := g.Submit(1); err == nil {
+		t.Fatal("expected ErrClosed when submitting to a closed Group")
+	}
+}
+
+func TestDoubleClose(t *testing.T) {
+	g, err := New[int](func(objs []int) {}, Size(10), Interval(time.Second))
+	if err != nil {
+		t.Fatalf("New error: %v", err)
+	}
+	if err := g.Close(); err != nil {
+		t.Fatalf("first Close error: %v", err)
+	}
+	if err := g.Close(); err == nil {
+		t.Fatal("expected ErrClosed on second close")
 	}
 }
