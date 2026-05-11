@@ -69,13 +69,16 @@ func TestContextCancellation(t *testing.T) {
 	const parties = 3
 	barrier := NewGroup(parties, nil)
 
-	// 先让一个goroutine到达屏障
-	subCtx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	// 第一个 goroutine 到达屏障; 它不会因自己的 ctx 取消,
+	// 而是因为其他参与者取消 ctx 导致 barrier broken。
+	var wg sync.WaitGroup
+	wg.Add(1)
 	go func() {
-		err := barrier.Wait(subCtx)
-		if err != context.Canceled {
-			t.Errorf("expected context.Canceled, got: %v", err)
+		defer wg.Done()
+		err := barrier.Wait(context.Background())
+		var brokenErr *BrokenBarrierError
+		if !errors.As(err, &brokenErr) {
+			t.Errorf("expected BrokenBarrierError, got: %v", err)
 		}
 	}()
 
@@ -90,6 +93,9 @@ func TestContextCancellation(t *testing.T) {
 	if err != context.Canceled {
 		t.Errorf("expected context.Canceled, got: %v", err)
 	}
+
+	// 等第一个 goroutine 收到结果再做断言,避免 t.Errorf 在测试结束后被调用
+	wg.Wait()
 
 	// 验证屏障是否损坏
 	if !barrier.IsBroken() {
@@ -229,8 +235,13 @@ func TestGetNumberWaiting(t *testing.T) {
 		t.Errorf("expected 0 waiting, got %d", barrier.GetNumberWaiting())
 	}
 
+	// 使用可取消的 context, 测试结束时通过 cancel 释放等待中的 goroutine,
+	// 否则该 goroutine 会因为只有 1/3 参与者到达屏障而永久阻塞,导致 goroutine 泄漏。
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
 	go func() {
-		barrier.Wait(context.Background())
+		defer close(done)
+		_ = barrier.Wait(ctx)
 	}()
 
 	// 等待一点时间确保goroutine已经开始等待
@@ -239,6 +250,9 @@ func TestGetNumberWaiting(t *testing.T) {
 	if barrier.GetNumberWaiting() != 1 {
 		t.Errorf("expected 1 waiting, got %d", barrier.GetNumberWaiting())
 	}
+
+	cancel()
+	<-done
 }
 
 // TestInvalidParties 测试无效的参与者数量
@@ -353,13 +367,24 @@ func TestMixedSuccessAndFailure(t *testing.T) {
 	}
 	wg.Wait()
 
-	// 损坏屏障
+	// Reset 仅将屏障恢复到初始状态(匹配 Java CyclicBarrier 语义),
+	// 不会将其置为永久 broken。要让后续 Wait 立即收到
+	// BrokenBarrierError, 需要通过 context 取消主动让屏障损坏。
 	barrier.Reset()
+	if barrier.IsBroken() {
+		t.Fatal("barrier should not be broken right after reset")
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if err := barrier.Wait(ctx); err != context.Canceled {
+		t.Errorf("expected context.Canceled, got: %v", err)
+	}
 
 	// 在损坏的屏障上等待应该失败
 	err := barrier.Wait(context.Background())
 	var brokenErr *BrokenBarrierError
 	if !errors.As(err, &brokenErr) {
-		t.Errorf("expected BrokenBarrierError after reset, got: %v", err)
+		t.Errorf("expected BrokenBarrierError after broken barrier, got: %v", err)
 	}
 }

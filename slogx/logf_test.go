@@ -23,6 +23,11 @@ func TestFormatLogger(t *testing.T) {
 
 	// 设置全局格式化日志记录器
 	slogx.SetFormatLogger(logger)
+	// SetFormatLogger 会用全局 levelVar(默认 INFO) 包装 handler,即使
+	// 底层 handler 配置为 LevelDebug, Debug 记录仍会被外层包装过滤掉。
+	// 测试 Debugf 前先把全局级别下调到 Debug, 测试结束后恢复 INFO。
+	slogx.SetFormatLoggerLevel(slog.LevelDebug)
+	t.Cleanup(func() { slogx.SetFormatLoggerLevel(slog.LevelInfo) })
 
 	// 测试上下文
 	ctx := context.Background()

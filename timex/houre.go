@@ -50,5 +50,5 @@ func LastHour(ts ...time.Time) time.Time {
 // Returns:
 //   - time.Time: the next hour with minutes and below truncated.
 func NextHour(ts ...time.Time) time.Time {
-	return ThisMonth(ts...).Add(time.Hour)
+	return ThisHour(ts...).Add(time.Hour)
 }

@@ -5,15 +5,13 @@ import (
 	"strings"
 )
 
-// Builder wraps strings.Builder with nil-check lazy initialization.
+// Builder wraps strings.Builder. The zero value is ready to use.
+//
+// Builder embeds strings.Builder by value so that copying a Builder
+// triggers the underlying copyCheck on the next mutating call, matching
+// the semantics of strings.Builder itself.
 type Builder struct {
-	b *strings.Builder
-}
-
-func (b *Builder) checkNil() {
-	if b.b == nil {
-		b.b = &strings.Builder{}
-	}
+	b strings.Builder
 }
 
 // String returns the accumulated string.
@@ -21,7 +19,6 @@ func (b *Builder) checkNil() {
 // Returns:
 //   - string: the accumulated string.
 func (b *Builder) String() string {
-	b.checkNil()
 	return b.b.String()
 }
 
@@ -30,7 +27,6 @@ func (b *Builder) String() string {
 // Returns:
 //   - int: the number of accumulated bytes.
 func (b *Builder) Len() int {
-	b.checkNil()
 	return b.b.Len()
 }
 
@@ -41,13 +37,11 @@ func (b *Builder) Len() int {
 // Returns:
 //   - int: the capacity of the underlying byte slice.
 func (b *Builder) Cap() int {
-	b.checkNil()
 	return b.b.Cap()
 }
 
 // Reset resets the Builder to be empty.
 func (b *Builder) Reset() {
-	b.checkNil()
 	b.b.Reset()
 }
 
@@ -58,7 +52,6 @@ func (b *Builder) Reset() {
 // Parameters:
 //   - n: the number of bytes to grow.
 func (b *Builder) Grow(n int) {
-	b.checkNil()
 	b.b.Grow(n)
 }
 
@@ -72,7 +65,6 @@ func (b *Builder) Grow(n int) {
 //   - int: the number of bytes written.
 //   - error: always nil.
 func (b *Builder) Write(p []byte) (int, error) {
-	b.checkNil()
 	return b.b.Write(p)
 }
 
@@ -85,7 +77,6 @@ func (b *Builder) Write(p []byte) (int, error) {
 // Returns:
 //   - error: always nil.
 func (b *Builder) WriteByte(c byte) error {
-	b.checkNil()
 	return b.b.WriteByte(c)
 }
 
@@ -99,7 +90,6 @@ func (b *Builder) WriteByte(c byte) error {
 //   - int: the length of the rune.
 //   - error: always nil.
 func (b *Builder) WriteRune(r rune) (int, error) {
-	b.checkNil()
 	return b.b.WriteRune(r)
 }
 
@@ -113,7 +103,6 @@ func (b *Builder) WriteRune(r rune) (int, error) {
 //   - int: the length of the string.
 //   - error: always nil.
 func (b *Builder) WriteString(s string) (int, error) {
-	b.checkNil()
 	return b.b.WriteString(s)
 }
 
@@ -126,7 +115,6 @@ func (b *Builder) WriteString(s string) (int, error) {
 // Returns:
 //   - error: any error encountered.
 func (b *Builder) WriteInt(i int64, base int) error {
-	b.checkNil()
 	_, err := b.b.Write(strconv.AppendInt(nil, i, base))
 	return err
 }
@@ -140,7 +128,6 @@ func (b *Builder) WriteInt(i int64, base int) error {
 // Returns:
 //   - error: any error encountered.
 func (b *Builder) WriteUint(i uint64, base int) error {
-	b.checkNil()
 	_, err := b.b.Write(strconv.AppendUint(nil, i, base))
 	return err
 }
@@ -153,7 +140,6 @@ func (b *Builder) WriteUint(i uint64, base int) error {
 // Returns:
 //   - error: any error encountered.
 func (b *Builder) WriteBool(bl bool) error {
-	b.checkNil()
 	_, err := b.b.Write(strconv.AppendBool(nil, bl))
 	return err
 }
@@ -169,7 +155,6 @@ func (b *Builder) WriteBool(bl bool) error {
 // Returns:
 //   - error: any error encountered.
 func (b *Builder) WriteFloat(f float64, fmt byte, prec, bitSize int) error {
-	b.checkNil()
 	_, err := b.b.Write(strconv.AppendFloat(nil, f, fmt, prec, bitSize))
 	return err
 }
@@ -182,7 +167,6 @@ func (b *Builder) WriteFloat(f float64, fmt byte, prec, bitSize int) error {
 // Returns:
 //   - error: any error encountered.
 func (b *Builder) WriteQuote(s string) error {
-	b.checkNil()
 	_, err := b.b.Write(strconv.AppendQuote(nil, s))
 	return err
 }
@@ -195,7 +179,6 @@ func (b *Builder) WriteQuote(s string) error {
 // Returns:
 //   - error: any error encountered.
 func (b *Builder) WriteQuoteRune(r rune) error {
-	b.checkNil()
 	_, err := b.b.Write(strconv.AppendQuoteRune(nil, r))
 	return err
 }
@@ -208,7 +191,6 @@ func (b *Builder) WriteQuoteRune(r rune) error {
 // Returns:
 //   - error: any error encountered.
 func (b *Builder) WriteQuoteRuneToASCII(r rune) error {
-	b.checkNil()
 	_, err := b.b.Write(strconv.AppendQuoteRuneToASCII(nil, r))
 	return err
 }
@@ -221,7 +203,6 @@ func (b *Builder) WriteQuoteRuneToASCII(r rune) error {
 // Returns:
 //   - error: any error encountered.
 func (b *Builder) WriteQuoteRuneToGraphic(r rune) error {
-	b.checkNil()
 	_, err := b.b.Write(strconv.AppendQuoteRuneToGraphic(nil, r))
 	return err
 }
@@ -234,7 +215,6 @@ func (b *Builder) WriteQuoteRuneToGraphic(r rune) error {
 // Returns:
 //   - error: any error encountered.
 func (b *Builder) WriteQuoteToASCII(s string) error {
-	b.checkNil()
 	_, err := b.b.Write(strconv.AppendQuoteToASCII(nil, s))
 	return err
 }
@@ -247,7 +227,6 @@ func (b *Builder) WriteQuoteToASCII(s string) error {
 // Returns:
 //   - error: any error encountered.
 func (b *Builder) WriteQuoteToGraphic(s string) error {
-	b.checkNil()
 	_, err := b.b.Write(strconv.AppendQuoteToGraphic(nil, s))
 	return err
 }
@@ -257,16 +236,23 @@ func (b *Builder) WriteQuoteToGraphic(s string) error {
 // Returns:
 //   - *Builder: a new Builder.
 func NewBuilder() *Builder {
-	return &Builder{b: &strings.Builder{}}
+	return &Builder{}
 }
 
-// NewBuilderBuilder creates a new Builder from an existing strings.Builder.
+// NewBuilderBuilder creates a new Builder seeded with the contents of the
+// provided strings.Builder. The source builder is not retained; only its
+// current content is copied so that subsequent writes to either builder do
+// not affect the other.
 //
 // Parameters:
-//   - b: the strings.Builder to wrap.
+//   - sb: the strings.Builder to copy content from. nil is treated as empty.
 //
 // Returns:
 //   - *Builder: a new Builder.
-func NewBuilderBuilder(b *strings.Builder) *Builder {
-	return &Builder{b: b}
+func NewBuilderBuilder(sb *strings.Builder) *Builder {
+	nb := &Builder{}
+	if sb != nil {
+		_, _ = nb.b.WriteString(sb.String())
+	}
+	return nb
 }

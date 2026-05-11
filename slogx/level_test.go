@@ -91,19 +91,19 @@ func TestLevelVarHandler_ServeHTTP_Success(t *testing.T) {
 	handler := slog.NewTextHandler(&bytes.Buffer{}, nil)
 	lvh := slogx.WithLevel(handler, levelVar)
 
-	// 构造请求体
-	body := map[string]string{"level": "DEBUG"}
-	jsonBody, _ := json.Marshal(body)
+	// handler 通过 req.PathValue("level") 读取新级别,
+	// 因此必须经过带路径参数的 ServeMux 才能被正确填充。
+	mux := http.NewServeMux()
+	mux.Handle("POST /level/{level}", lvh)
 
-	// 创建 HTTP 请求
-	req := httptest.NewRequest(http.MethodPost, "/level", bytes.NewBuffer(jsonBody))
-	req.Header.Set("Content-Type", "application/json")
+	// 创建 HTTP 请求(路径中携带级别)
+	req := httptest.NewRequest(http.MethodPost, "/level/DEBUG", nil)
 
 	// 创建响应记录器
 	rr := httptest.NewRecorder()
 
-	// 调用 ServeHTTP
-	lvh.ServeHTTP(rr, req)
+	// 经由 mux 调度到 handler
+	mux.ServeHTTP(rr, req)
 
 	// 检查响应
 	if status := rr.Code; status != http.StatusOK {
@@ -126,8 +126,9 @@ func TestLevelVarHandler_ServeHTTP_WrongMethod(t *testing.T) {
 	handler := slog.NewTextHandler(&bytes.Buffer{}, nil)
 	lvh := slogx.WithLevel(handler, levelVar)
 
-	// 使用 GET 方法而不是 POST
-	req := httptest.NewRequest(http.MethodGet, "/level", nil)
+	// handler GET 用于回读当前级别, POST 用于更新,
+	// 其它方法返回 405; 这里用 DELETE 验证 405 分支。
+	req := httptest.NewRequest(http.MethodDelete, "/level", nil)
 	rr := httptest.NewRecorder()
 
 	lvh.ServeHTTP(rr, req)

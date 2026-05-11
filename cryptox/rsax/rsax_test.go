@@ -1,6 +1,12 @@
 package rsax
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -51,8 +57,32 @@ func TestCrypt(t *testing.T) {
 }
 
 func TestLoad(t *testing.T) {
-	priv, pub, err := LoadKeyBase64("/tmp/priv.pem")
+	// 临时目录生成 PEM 私钥文件,避免依赖 /tmp/priv.pem
+	privateKey, err := rsa.GenerateKey(rand.Reader, 1024)
 	assert.NoError(t, err)
+
+	pemBytes := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
+	})
+
+	file := filepath.Join(t.TempDir(), "priv.pem")
+	assert.NoError(t, os.WriteFile(file, pemBytes, 0o600))
+
+	priv, pub, err := LoadKeyBase64(file)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, priv)
+	assert.NotEmpty(t, pub)
 	t.Log(priv)
 	t.Log(pub)
+
+	privHex, pubHex, err := LoadKeyHex(file)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, privHex)
+	assert.NotEmpty(t, pubHex)
+}
+
+func TestLoad_MissingFile(t *testing.T) {
+	_, _, err := LoadKeyBase64(filepath.Join(t.TempDir(), "does-not-exist.pem"))
+	assert.Error(t, err)
 }

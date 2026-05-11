@@ -92,10 +92,11 @@ func TestPoolGetPut(t *testing.T) {
 			t.Error("expected reset function to be called")
 		}
 
-		// Get again - should return the pooled value
+		// Get again - sync.Pool does not guarantee cache hit; GC or scheduler may
+		// drop the cached value, in which case New() runs and returns 2. Both are valid.
 		val2 := pool.Get()
-		if val2 != 1 {
-			t.Errorf("expected 1, got %d", val2)
+		if val2 != 1 && val2 != 2 {
+			t.Errorf("expected 1 (pooled) or 2 (fresh), got %d", val2)
 		}
 	})
 
@@ -138,10 +139,15 @@ func TestPoolGetPut(t *testing.T) {
 		// Put it back - reset function should be called
 		pool.Put(person1)
 
-		// Get it again - should be reset to zero values
+		// Get it again - either reset to zero values (pool hit) or a fresh person with Age=2 (pool miss).
 		person2 := pool.Get()
-		if person2.Name != "" || person2.Age != 0 {
-			t.Errorf("expected reset person, got %+v", person2)
+		switch {
+		case person2.Name == "" && person2.Age == 0:
+			// pool hit -> reset was effective
+		case person2.Name == "Person" && person2.Age == 2:
+			// pool miss -> sync.Pool dropped the entry, New() ran
+		default:
+			t.Errorf("unexpected person, got %+v", person2)
 		}
 	})
 
