@@ -67,13 +67,14 @@ func (m *MultiHandler) Handle(ctx context.Context, record slog.Record) error {
 	errs := make([]error, len(m.handlers))
 
 	for i, h := range m.handlers {
-		wg.Add(1)
-		go func(idx int, handler slog.Handler) {
-			defer wg.Done()
+		if !h.Enabled(ctx, record.Level) {
+			continue
+		}
+		wg.Go(func() {
 			// Copy record to avoid concurrent issues
 			recCopy := record
-			errs[idx] = handler.Handle(ctx, recCopy)
-		}(i, h)
+			errs[i] = h.Handle(ctx, recCopy)
+		})
 	}
 
 	wg.Wait()
