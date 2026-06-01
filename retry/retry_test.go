@@ -303,6 +303,186 @@ func TestDefaultStrategy_Exec(t *testing.T) {
 	})
 }
 
+func TestDefaultStrategy_ExecWithResult(t *testing.T) {
+	t.Run("executes command successfully on first attempt", func(t *testing.T) {
+		ds := &defaultStrategy{
+			maxAttempts: 3,
+			backoffFunc: backoff.Zero(),
+			retryOnFunc: func(err error) bool { return true },
+		}
+
+		attempts := 0
+		cmd := func(ctx context.Context, attempt uint) (any, error) {
+			attempts++
+			return "success", nil
+		}
+
+		result, err := ds.ExecWithResult(context.Background(), cmd)
+
+		if err != nil {
+			t.Errorf("expected no error, got %v", err)
+		}
+		if result != "success" {
+			t.Errorf("expected 'success', got %v", result)
+		}
+		if attempts != 1 {
+			t.Errorf("expected 1 attempt, got %d", attempts)
+		}
+	})
+
+	t.Run("retries on error until success", func(t *testing.T) {
+		ds := &defaultStrategy{
+			maxAttempts: 3,
+			backoffFunc: backoff.Zero(),
+			retryOnFunc: func(err error) bool { return true },
+		}
+
+		attempts := 0
+		cmd := func(ctx context.Context, attempt uint) (any, error) {
+			attempts++
+			if attempts < 3 {
+				return nil, errors.New("temporary error")
+			}
+			return "recovered", nil
+		}
+
+		result, err := ds.ExecWithResult(context.Background(), cmd)
+
+		if err != nil {
+			t.Errorf("expected no error, got %v", err)
+		}
+		if result != "recovered" {
+			t.Errorf("expected 'recovered', got %v", result)
+		}
+		if attempts != 3 {
+			t.Errorf("expected 3 attempts, got %d", attempts)
+		}
+	})
+
+	t.Run("retries until max attempts exhausted", func(t *testing.T) {
+		ds := &defaultStrategy{
+			maxAttempts: 3,
+			backoffFunc: backoff.Zero(),
+			retryOnFunc: func(err error) bool { return true },
+		}
+
+		attempts := 0
+		cmd := func(ctx context.Context, attempt uint) (any, error) {
+			attempts++
+			return nil, errors.New("persistent error")
+		}
+
+		result, err := ds.ExecWithResult(context.Background(), cmd)
+
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+		if result != nil {
+			t.Errorf("expected nil result, got %v", result)
+		}
+		if attempts != 4 { // Initial + 3 retries
+			t.Errorf("expected 4 attempts (initial + 3 retries), got %d", attempts)
+		}
+	})
+
+	t.Run("respects retry condition", func(t *testing.T) {
+		ds := &defaultStrategy{
+			maxAttempts: 5,
+			backoffFunc: backoff.Zero(),
+			retryOnFunc: func(err error) bool {
+				return err.Error() == "timeout"
+			},
+		}
+
+		attempts := 0
+		cmd := func(ctx context.Context, attempt uint) (any, error) {
+			attempts++
+			if attempts == 1 {
+				return nil, errors.New("timeout")
+			}
+			return nil, errors.New("network error")
+		}
+
+		result, err := ds.ExecWithResult(context.Background(), cmd)
+
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+		if err.Error() != "network error" {
+			t.Errorf("expected 'network error', got %v", err)
+		}
+		if result != nil {
+			t.Errorf("expected nil result, got %v", result)
+		}
+		if attempts != 2 {
+			t.Errorf("expected 2 attempts, got %d", attempts)
+		}
+	})
+
+	t.Run("cancels on context done", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+
+		ds := &defaultStrategy{
+			maxAttempts: 5,
+			backoffFunc: backoff.Constant(time.Millisecond * 10),
+			retryOnFunc: func(err error) bool { return true },
+		}
+
+		attempts := 0
+		cmd := func(ctx context.Context, attempt uint) (any, error) {
+			attempts++
+			if attempts == 2 {
+				cancel()
+			}
+			return nil, errors.New("error")
+		}
+
+		result, err := ds.ExecWithResult(ctx, cmd)
+
+		if !errors.Is(err, context.Canceled) {
+			t.Errorf("expected context.Canceled error, got %v", err)
+		}
+		if result != nil {
+			t.Errorf("expected nil result, got %v", result)
+		}
+	})
+
+	t.Run("returns structured result", func(t *testing.T) {
+		ds := &defaultStrategy{
+			maxAttempts: 2,
+			backoffFunc: backoff.Zero(),
+			retryOnFunc: func(err error) bool { return true },
+		}
+
+		type response struct {
+			ID   int
+			Name string
+		}
+
+		attempts := 0
+		cmd := func(ctx context.Context, attempt uint) (any, error) {
+			attempts++
+			if attempts < 2 {
+				return nil, errors.New("temporary error")
+			}
+			return response{ID: 42, Name: "test"}, nil
+		}
+
+		result, err := ds.ExecWithResult(context.Background(), cmd)
+
+		if err != nil {
+			t.Errorf("expected no error, got %v", err)
+		}
+		resp, ok := result.(response)
+		if !ok {
+			t.Fatalf("expected response type, got %T", result)
+		}
+		if resp.ID != 42 || resp.Name != "test" {
+			t.Errorf("expected {42, test}, got %+v", resp)
+		}
+	})
+}
+
 func TestBuilderPattern(t *testing.T) {
 	t.Run("full builder pattern works correctly", func(t *testing.T) {
 		executed := false

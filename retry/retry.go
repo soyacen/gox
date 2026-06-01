@@ -46,6 +46,18 @@ type Executor interface {
 	// Returns:
 	//   - error: nil if successful, or the last error after all retries exhausted
 	Exec(ctx context.Context, cmd func(ctx context.Context, attempt uint) error) error
+
+	// ExecWithResult executes a command with retry logic and returns a result value.
+	// The command will be retried based on the configured backoff and retry conditions.
+	//
+	// Parameters:
+	//   - ctx: Context for cancellation and timeout control
+	//   - cmd: Function to execute, receiving context and attempt number, returning a result and error
+	//
+	// Returns:
+	//   - any: The result returned by the command on success, or nil on failure
+	//   - error: nil if successful, or the last error after all retries exhausted
+	ExecWithResult(ctx context.Context, cmd func(ctx context.Context, attempt uint) (any, error)) (any, error)
 }
 
 // defaultStrategy implements BackoffStrategy, RetryOnStrategy, and Executor interfaces.
@@ -108,6 +120,43 @@ func (r *defaultStrategy) Exec(ctx context.Context, cmd func(ctx context.Context
 		select {
 		case <-ctx.Done(): // return if context is done, return context error
 			return ctx.Err()
+		case <-time.After(r.backoffFunc(ctx, attempt)): // sleep and wait retry
+			continue
+		}
+	}
+	// perform the execution
+	return cmd(ctx, attempt)
+}
+
+// ExecWithResult executes a command with retry logic and returns a result value.
+// It attempts to execute the command and retries based on configured backoff and retry conditions.
+// The loop continues until success, max attempts reached, context cancelled, or retry condition fails.
+//
+// Parameters:
+//   - ctx: Context for cancellation and timeout control
+//   - cmd: Function to execute, receives context and current attempt number, returns a result and error
+//
+// Returns:
+//   - any: The result from the command on success, or nil if all retries failed
+//   - error: nil if successful, context error if cancelled, or command error after all retries
+func (r *defaultStrategy) ExecWithResult(ctx context.Context, cmd func(ctx context.Context, attempt uint) (any, error)) (any, error) {
+	var attempt uint
+	for attempt < r.maxAttempts {
+		// execute cmd
+		result, err := cmd(ctx, attempt)
+		if err == nil {
+			// return result if err is nil.
+			return result, nil
+		}
+		if r.retryOnFunc != nil && !r.retryOnFunc(err) {
+			// return if retryOnFunc is not nil and retryOnFunc returns false
+			return nil, err
+		}
+		// increase the number of attempts
+		attempt++
+		select {
+		case <-ctx.Done(): // return if context is done, return context error
+			return nil, ctx.Err()
 		case <-time.After(r.backoffFunc(ctx, attempt)): // sleep and wait retry
 			continue
 		}

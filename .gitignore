@@ -18,6 +18,7 @@
 .vscode
 .claude
 .lingma
+.qoder
 COMMENT_UPDATE_PROGRESS.md
 update_comments.py
 .DS_Store
