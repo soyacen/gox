@@ -31,3 +31,25 @@ func MessageToStruct(msg proto.Message) (*structpb.Struct, error) {
 	}
 	return structpb.NewStruct(m)
 }
+
+// StructToMessage converts a structpb.Struct to a protobuf message.
+// It marshals the struct to JSON, and unmarshals into the provided proto
+// message.
+//
+// Parameters:
+//   - s: the structpb.Struct to convert.
+//   - msg: the target protobuf message to populate.
+//
+// Returns:
+//   - error: an error if marshaling or unmarshaling fails.
+func StructToMessage(s *structpb.Struct, msg proto.Message) error {
+	if s == nil || msg == nil {
+		return nil
+	}
+
+	data, err := protojson.MarshalOptions{}.Marshal(s)
+	if err != nil {
+		return err
+	}
+	return protojson.UnmarshalOptions{}.Unmarshal(data, msg)
+}
