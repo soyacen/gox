@@ -51,5 +51,8 @@ func StructToMessage(s *structpb.Struct, msg proto.Message) error {
 	if err != nil {
 		return err
 	}
-	return protojson.UnmarshalOptions{}.Unmarshal(data, msg)
+	return protojson.UnmarshalOptions{
+		AllowPartial:   true,
+		DiscardUnknown: true,
+	}.Unmarshal(data, msg)
 }
