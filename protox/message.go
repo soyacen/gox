@@ -21,6 +21,7 @@ import (
 func MessageToStruct(msg proto.Message) (*structpb.Struct, error) {
 	data, err := protojson.MarshalOptions{
 		UseProtoNames: true,
+		AllowPartial:  true,
 	}.Marshal(msg)
 	if err != nil {
 		return nil, err
@@ -47,7 +48,10 @@ func StructToMessage(s *structpb.Struct, msg proto.Message) error {
 		return nil
 	}
 
-	data, err := protojson.MarshalOptions{}.Marshal(s)
+	data, err := protojson.MarshalOptions{
+		UseProtoNames: true,
+		AllowPartial:  true,
+	}.Marshal(s)
 	if err != nil {
 		return err
 	}
