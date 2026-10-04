@@ -14,7 +14,7 @@
 .
 ├── conc/           # Concurrency: pools, barriers, channels, maps, mutexes
 ├── cryptox/        # Cryptography: AES, RSA, SHA, HMAC, TLS, MD5
-├── databasex/      # Database: pagination, SQL injection detection, query builder
+├── databasex/      # Database: MySQL types, pagination, SQL injection detection, query builder
 ├── stringx/        # String utilities: 22 files, heaviest package
 ├── slicex/         # Slice generics: Max, Min, Filter, Map, Reduce, etc.
 ├── httpx/          # HTTP client/server tools (mostly deprecated)

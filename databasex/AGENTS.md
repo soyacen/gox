@@ -2,12 +2,13 @@
 
 ## OVERVIEW
 
-Database utility cluster: pagination, SQL injection detection, and unsafe SQL string building.
+Database utility cluster: MySQL data types, pagination, SQL injection detection, and unsafe SQL string building.
 
 ## STRUCTURE
 
 ```
 databasex/
+├── mysqlx/        # MySQL data types modeled after pgx/v5/pgtype (nullable types, Scanner/Valuer/JSON)
 ├── pagex/         # Pagination: Page struct, Option pattern, protobuf bridge
 ├── sqls/          # SQL injection detection via regex pattern matching
 └── unsafesql/     # SQL query string builder (fluent API, Must* panic variants)
@@ -17,7 +18,10 @@ databasex/
 
 | Task | Location | Notes |
 |------|----------|-------|
-| Add pagination field | `pagex/page.go` | Add to struct + getter + Option func + proto |
+| Add a MySQL type | `mysqlx/<family>.go` | Struct with `Valid bool` + Scan/Value/MarshalJSON/UnmarshalJSON |
+| Add a MySQL type name | `mysqlx/types.go` | `Type*` string constants |
+| Change scan source coercion | `mysqlx/scan.go` | `coerce*` helpers + generic `scanSigned`/`scanUnsigned` |
+| Add a pagination field | `pagex/page.go` | Add to struct + getter + Option func + proto |
 | Change SQL injection rules | `sqls/sql_injection.go` | Two regexes: syntax + comment patterns |
 | Add SQL operator | `unsafesql/sql.go` | Add safe + Must* pair; no abstraction exists |
 | Store page in context | `pagex/context.go` | `NewContext` / `FromContext` with private key |
@@ -30,6 +34,9 @@ databasex/
 - **sync.Once guard**: `Page.SetTotal` uses `totalOnce` to prevent double-write
 - **Context storage**: Private `key struct{}` for context value storage
 - **Cross-package dep**: `sqls` imports `stringx.IsBlank` for blank check
+- **Nullable MySQL types**: Every mysqlx type carries `Valid bool`, implements `sql.Scanner`/`driver.Valuer` and JSON, and NULL maps to the zero value
+- **Aliases over repetition**: Same-representation MySQL variants are type aliases (`type Char = Text`, `type LineString = Geometry`) to avoid the unsafe-ql style duplication
+- **Generics for shared logic**: mysqlx integer logic lives in `scanSigned`/`scanUnsigned`/`signedValue`/`marshalSignedJSON` rather than per-type copies
 
 ## ANTI-PATTERNS
 
@@ -38,3 +45,5 @@ databasex/
 - `unsafesql` is truly unsafe: string concatenation, no parameterization
 - `pagex` pageNum is 1-based; offset calculated as `(pageNum-1)*pageSize`
 - `CheckSqlInjection` regex may have false positives/negatives
+- `mysqlx.Geometry` keeps raw WKB bytes and does not decode geometry primitives; only `Point` is fully decoded
+- `mysqlx` has no `Codec`/`Map` registry (unlike pgtype); types are used directly with `database/sql`
