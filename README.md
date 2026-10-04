@@ -48,7 +48,7 @@ gox 是一个 Go 语言工具库，提供了一系列常用的功能模块，涵
 | 包 | 描述 |
 |---|---|
 | [databasex](databasex) | 数据库工具集 |
-| [mysqlx](databasex/mysqlx) | MySQL 数据类型，仿 `pgx/v5/pgtype` 的可空类型 |
+| [mysqlx](databasex/mysqlx) | MySQL 数据类型，仿 `pgx/v5/pgtype` 的可空类型（另含 UUID、IP 扩展类型） |
 | [pagex](databasex/pagex) | 分页工具 |
 | [sqls](databasex/sqls) | SQL 安全检查 |
 | [unsafesql](databasex/unsafesql) | SQL 拼接构造器 |

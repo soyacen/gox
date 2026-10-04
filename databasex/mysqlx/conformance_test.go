@@ -170,6 +170,18 @@ func TestTypeConformance(t *testing.T) {
 			src: testUUID, wantValue: testUUID, wantJSON: `"` + testUUID + `"`,
 		},
 		{
+			name: "IP", new: func() nullable { return &IP{} },
+			src: "192.168.1.1", wantValue: "192.168.1.1", wantJSON: `"192.168.1.1"`,
+		},
+		{
+			name: "IPPrefix", new: func() nullable { return &IPPrefix{} },
+			src: "192.168.1.0/24", wantValue: "192.168.1.0/24", wantJSON: `"192.168.1.0/24"`,
+		},
+		{
+			name: "IPPort", new: func() nullable { return &IPPort{} },
+			src: "192.168.1.1:3306", wantValue: "192.168.1.1:3306", wantJSON: `"192.168.1.1:3306"`,
+		},
+		{
 			name: "Geometry", new: func() nullable { return &Geometry{} },
 			src: pointWKB, wantValue: pointWKB, wantJSON: geometryJSON,
 		},

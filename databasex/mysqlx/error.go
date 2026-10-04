@@ -31,3 +31,7 @@ var ErrInvalidJSON = errors.New("mysqlx: invalid json")
 
 // ErrInvalidUUID is returned when a value cannot be parsed as a UUID.
 var ErrInvalidUUID = errors.New("mysqlx: invalid uuid")
+
+// ErrInvalidIP is returned when a value cannot be parsed as an IP address, a
+// CIDR network or an address and port pair.
+var ErrInvalidIP = errors.New("mysqlx: invalid ip")

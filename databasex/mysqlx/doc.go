@@ -65,6 +65,9 @@
 //
 //	JSON                      json
 //	UUID                      uuid (MariaDB only)
+//	IP                        varchar(45) / varbinary(16) / int unsigned
+//	IPPrefix                  varchar(49)
+//	IPPort                    varchar(53)
 //
 //	Geometry                  geometry
 //	                          linestring
@@ -139,4 +142,23 @@
 //
 // [UUID] is backed by the standard library [uuid] package, so building this
 // package requires Go 1.27 or later.
+//
+// # IP Values
+//
+// MySQL has no native IP type either, and offers three storage strategies, all
+// of which [IP] understands:
+//
+//	VARCHAR(45)     text written by INET6_NTOA, for example "2001:db8::1"
+//	VARBINARY(16)   packed bytes written by INET6_ATON, 4 bytes for IPv4
+//	INT UNSIGNED    INET_ATON integer form of an IPv4 address
+//
+// [IP].Value writes the text form, while [IP].Bin returns the packed form and
+// [IP].Uint32 returns the integer form, so every strategy can be written as well
+// as read. [IPPrefix] and [IPPort] cover CIDR networks and address and port
+// pairs and are always exchanged as text.
+//
+//	addr := mysqlx.MustParseIP("192.168.1.1")
+//	text, _ := addr.Value()        // "192.168.1.1"
+//	packed := addr.Bin()           // []byte{192, 168, 1, 1}
+//	integer, _ := addr.Uint32()    // 3232235777
 package mysqlx
