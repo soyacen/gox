@@ -64,6 +64,7 @@
 //	                          longblob
 //
 //	JSON                      json
+//	UUID                      uuid (MariaDB only)
 //
 //	Geometry                  geometry
 //	                          linestring
@@ -121,4 +122,21 @@
 // DATETIME and DATE columns carry no time zone information. When the driver
 // returns the value as text, it is parsed in UTC. When the driver returns a
 // time.Time (parseTime=true) its location is preserved.
+//
+// # UUID Values
+//
+// MySQL has no dedicated UUID type. Identifiers are stored in CHAR(36) columns
+// using the canonical hyphenated form, or in BINARY(16) columns using the packed
+// form produced by the UUID_TO_BIN function. [UUID] scans both representations
+// and writes the canonical form, which the server converts with UUID_TO_BIN when
+// the target column is BINARY(16).
+//
+//	// ORDER BY created_at keeps v7 identifiers in insertion order.
+//	id := mysqlx.NewUUIDV7()
+//
+//	// BINARY(16) columns can be round-tripped without a textual form.
+//	var packed []byte = id.Bin()
+//
+// [UUID] is backed by the standard library [uuid] package, so building this
+// package requires Go 1.27 or later.
 package mysqlx

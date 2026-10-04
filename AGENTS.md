@@ -6,7 +6,7 @@
 
 ## OVERVIEW
 
-`gox` is a comprehensive Go utility library (monorepo style) providing extensions across concurrency, crypto, strings, collections, HTTP, database, and more. Module: `github.com/soyacen/gox`, Go 1.25.0.
+`gox` is a comprehensive Go utility library (monorepo style) providing extensions across concurrency, crypto, strings, collections, HTTP, database, and more. Module: `github.com/soyacen/gox`, Go 1.27.0.
 
 ## STRUCTURE
 
@@ -87,7 +87,8 @@
 ## UNIQUE STYLES
 
 - **Chinese comments**: Most source comments and docs are in Chinese
-- **Go version mismatch**: Root `go.mod` declares 1.25.0; CI uses 1.20; submodules use 1.20
+- **Go version mismatch**: Root `go.mod` and CI both target 1.27.0; the `conc/gofer/*` submodules still declare 1.20
+- **Go 1.27 floor in one package**: `databasex/mysqlx` imports the standard library `uuid` package added in Go 1.27, so that package cannot be built with an older toolchain
 - **Submodules for pool adapters**: `conc/gofer/*/` each have independent `go.mod`
 - **No `pkg/` or `internal/` directories**: Public API lives flat at root
 - **Placeholder CI messages**: `.github/workflows/greetings.yml` uses literal placeholder text

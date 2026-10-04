@@ -28,3 +28,6 @@ var ErrInvalidGeometry = errors.New("mysqlx: invalid geometry")
 
 // ErrInvalidJSON is returned when a value cannot be parsed as a JSON document.
 var ErrInvalidJSON = errors.New("mysqlx: invalid json")
+
+// ErrInvalidUUID is returned when a value cannot be parsed as a UUID.
+var ErrInvalidUUID = errors.New("mysqlx: invalid uuid")

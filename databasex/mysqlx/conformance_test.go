@@ -166,6 +166,10 @@ func TestTypeConformance(t *testing.T) {
 			src: []byte(`{"a":1}`), wantValue: []byte(`{"a":1}`), wantJSON: `{"a":1}`,
 		},
 		{
+			name: "UUID", new: func() nullable { return &UUID{} },
+			src: testUUID, wantValue: testUUID, wantJSON: `"` + testUUID + `"`,
+		},
+		{
 			name: "Geometry", new: func() nullable { return &Geometry{} },
 			src: pointWKB, wantValue: pointWKB, wantJSON: geometryJSON,
 		},

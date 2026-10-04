@@ -84,6 +84,10 @@ const (
 	// TypeJSON is the MySQL JSON type name.
 	TypeJSON = "json"
 
+	// TypeUUID is the MariaDB UUID type name. MySQL itself has no native UUID
+	// type and stores identifiers in CHAR(36) or BINARY(16) columns instead.
+	TypeUUID = "uuid"
+
 	// TypeGeometry is the MySQL GEOMETRY type name.
 	TypeGeometry = "geometry"
 	// TypePoint is the MySQL POINT type name.
