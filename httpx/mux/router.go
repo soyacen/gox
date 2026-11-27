@@ -3,6 +3,7 @@ package mux
 
 import (
 	"net/http"
+	"slices"
 	"strings"
 )
 
@@ -386,7 +387,28 @@ func validateMiddlewares(middleware []Middleware) {
 	}
 }
 
-// chainFunc combines multiple Middleware functions into a single Middleware.
+// AdaptMiddlewareFunc combines middleware functions into a Middleware.
+// The first function is the outermost. With no functions, it returns an
+// identity middleware. It panics if any function is nil.
+func AdaptMiddlewareFunc(middlewares ...MiddlewareFunc) Middleware {
+	for _, middleware := range middlewares {
+		if middleware == nil {
+			panic("router: nil middleware")
+		}
+	}
+	chain := chainMiddlewareFunc(slices.Clone(middlewares)...)
+	return func(next http.Handler) http.Handler {
+		if chain == nil {
+			return next
+		}
+		nextFunc := next.ServeHTTP
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			invoke(chain, w, r, nextFunc)
+		})
+	}
+}
+
+// chainMiddlewareFunc combines multiple Middleware functions into a single Middleware.
 // If no middlewares are provided, returns nil.
 // If one middleware is provided, returns that middleware.
 // If multiple middlewares are provided, returns a middleware that executes them in chain.
@@ -398,7 +420,7 @@ func validateMiddlewares(middleware []Middleware) {
 // Returns:
 //
 //	Middleware - a single middleware function representing the entire chain
-func chainFunc(middlewares ...MiddlewareFunc) MiddlewareFunc {
+func chainMiddlewareFunc(middlewares ...MiddlewareFunc) MiddlewareFunc {
 	var mdw MiddlewareFunc
 	if len(middlewares) == 0 {
 		mdw = nil

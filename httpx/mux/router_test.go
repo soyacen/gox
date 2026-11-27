@@ -48,6 +48,71 @@ func TestRouterMiddlewareOrderAndRoutes(t *testing.T) {
 	}
 }
 
+func TestAdapMiddlewareOrderAndRegistration(t *testing.T) {
+	var trace []string
+	traceFunc := func(name string) MiddlewareFunc {
+		return func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+			trace = append(trace, name+":before")
+			next(w, r)
+			trace = append(trace, name+":after")
+		}
+	}
+
+	middlewares := []MiddlewareFunc{traceFunc("global-first"), traceFunc("global-second")}
+	r := New()
+	r.Use(AdaptMiddlewareFunc(middlewares...), traceMiddleware("global-existing", &trace))
+	middlewares[0] = nil
+
+	g := r.Group("/api")
+	g.Use(AdaptMiddlewareFunc(traceFunc("group")))
+	child := g.Group("/v1")
+	g.Use(AdaptMiddlewareFunc(traceFunc("group-late")))
+	child.GET("/users", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		trace = append(trace, "handler")
+		w.WriteHeader(http.StatusNoContent)
+	}), AdaptMiddlewareFunc(traceFunc("route")))
+
+	recorder := performRequest(r, http.MethodGet, "/api/v1/users")
+	assertStatus(t, recorder, http.StatusNoContent)
+	assertTrace(t, trace, []string{
+		"global-first:before", "global-second:before", "global-existing:before", "group:before", "route:before",
+		"handler",
+		"route:after", "group:after", "global-existing:after", "global-second:after", "global-first:after",
+	})
+}
+
+func TestAdapMiddlewareForwardsArgumentsAndCanStop(t *testing.T) {
+	request := httptest.NewRequest(http.MethodGet, "/original", nil)
+	forwardedRequest := httptest.NewRequest(http.MethodGet, "/forwarded", nil)
+	forwardedWriter := httptest.NewRecorder()
+	middleware := AdaptMiddlewareFunc(
+		func(_ http.ResponseWriter, _ *http.Request, next http.HandlerFunc) {
+			next(forwardedWriter, forwardedRequest)
+		},
+		func(w http.ResponseWriter, r *http.Request, _ http.HandlerFunc) {
+			if w != forwardedWriter || r != forwardedRequest {
+				t.Fatal("next received the original writer or request")
+			}
+			w.WriteHeader(http.StatusForbidden)
+		},
+	)
+	handler := middleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		t.Fatal("handler called after middleware stopped the chain")
+	}))
+	handler.ServeHTTP(httptest.NewRecorder(), request)
+	assertStatus(t, forwardedWriter, http.StatusForbidden)
+}
+
+func TestAdapMiddlewareEmptyAndNil(t *testing.T) {
+	next := http.NewServeMux()
+	if got := AdaptMiddlewareFunc()(next); got != next {
+		t.Fatal("empty middleware chain changed the downstream handler")
+	}
+	assertPanics(t, func() {
+		AdaptMiddlewareFunc(func(http.ResponseWriter, *http.Request, http.HandlerFunc) {}, nil)
+	})
+}
+
 func TestRouterExposesMuxForInfrastructureRoutes(t *testing.T) {
 	r := New()
 	r.Mux().HandleFunc("GET /infra-probe", func(w http.ResponseWriter, _ *http.Request) {
