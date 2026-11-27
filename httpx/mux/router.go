@@ -390,6 +390,15 @@ func validateMiddlewares(middleware []Middleware) {
 // AdaptMiddlewareFunc combines middleware functions into a Middleware.
 // The first function is the outermost. With no functions, it returns an
 // identity middleware. It panics if any function is nil.
+//
+// For [Router.Use], prefer adapting consecutive functions together, as in
+// r.Use(AdaptMiddlewareFunc(first, second)). The router wraps global middleware
+// per request, and the batch builds its continuations as the request advances.
+//
+// For group and per-route middleware, prefer passing each function as a
+// separate Middleware, as in g.Use(AdaptMiddlewareFunc(first),
+// AdaptMiddlewareFunc(second)). The route builds the chain at registration time
+// so later requests can reuse the continuations.
 func AdaptMiddlewareFunc(middlewares ...MiddlewareFunc) Middleware {
 	for _, middleware := range middlewares {
 		if middleware == nil {
@@ -403,7 +412,7 @@ func AdaptMiddlewareFunc(middlewares ...MiddlewareFunc) Middleware {
 		}
 		nextFunc := next.ServeHTTP
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			invoke(chain, w, r, nextFunc)
+			handle(chain, w, r, nextFunc)
 		})
 	}
 }
@@ -428,13 +437,13 @@ func chainMiddlewareFunc(middlewares ...MiddlewareFunc) MiddlewareFunc {
 		mdw = middlewares[0]
 	} else {
 		mdw = func(response http.ResponseWriter, request *http.Request, invoker http.HandlerFunc) {
-			middlewares[0](response, request, getInvoker(middlewares, 0, invoker))
+			middlewares[0](response, request, getHandlerFunc(middlewares, 0, invoker))
 		}
 	}
 	return mdw
 }
 
-// getInvoker recursively builds the invoker chain for executing middlewares in sequence.
+// getHandlerFunc recursively builds the invoker chain for executing middlewares in sequence.
 //
 // Parameters:
 //
@@ -445,27 +454,27 @@ func chainMiddlewareFunc(middlewares ...MiddlewareFunc) MiddlewareFunc {
 // Returns:
 //
 //	http.HandlerFunc - a handler function that continues the middleware chain
-func getInvoker(interceptors []MiddlewareFunc, curr int, finalInvoker http.HandlerFunc) http.HandlerFunc {
+func getHandlerFunc(interceptors []MiddlewareFunc, curr int, finalInvoker http.HandlerFunc) http.HandlerFunc {
 	if curr == len(interceptors)-1 {
 		return finalInvoker
 	}
 	return func(response http.ResponseWriter, request *http.Request) {
-		interceptors[curr+1](response, request, getInvoker(interceptors, curr+1, finalInvoker))
+		interceptors[curr+1](response, request, getHandlerFunc(interceptors, curr+1, finalInvoker))
 	}
 }
 
-// invoke wraps a Middleware and a final handler function into an http.Handler.
+// handle wraps a Middleware and a final handler function into an http.Handler.
 // If the middleware is nil, directly calls the final handler.
 // Otherwise, executes the middleware chain ending with the final handler.
 //
 // Parameters:
 //
 //	middleware - Middleware function to execute (can be nil)
-//	invoke - http.HandlerFunc representing the final handler
+//	handle - http.HandlerFunc representing the final handler
 //	response - http.ResponseWriter to write the HTTP response
 //	request - *http.Request representing the incoming HTTP request
 //	routeInfo - *goose.RouteInfo representing the route information
-func invoke(middleware MiddlewareFunc, response http.ResponseWriter, request *http.Request, invoke http.HandlerFunc) {
+func handle(middleware MiddlewareFunc, response http.ResponseWriter, request *http.Request, invoke http.HandlerFunc) {
 	if middleware == nil {
 		invoke(response, request)
 		return
